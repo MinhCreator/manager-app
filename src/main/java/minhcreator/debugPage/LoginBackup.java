@@ -67,7 +67,7 @@ public class LoginBackup extends JPanel {
         desc.putClientProperty(
                 FlatClientProperties.STYLE,
                 "" + "[light]foreground: lighten(@foreground, 30%);"
-                + "[dark]foreground: darken(@foreground, 30%);"
+                        + "[dark]foreground: darken(@foreground, 30%);"
         );
 
         panel.add(lbtitle);
@@ -85,7 +85,7 @@ public class LoginBackup extends JPanel {
     private Component createSignupLable() {
         JPanel panel = new JPanel(
                 new FlowLayout(
-                        FlowLayout.CENTER,0,0
+                        FlowLayout.CENTER, 0, 0
                 )
         );
         panel.putClientProperty(
@@ -100,18 +100,18 @@ public class LoginBackup extends JPanel {
         );
         cmdRegister.putClientProperty(
                 FlatClientProperties.STYLE,
-                "" + "border:3,3,3,3"
+                "" + "border:0,0,0,0"
         );
         cmdRegister.setContentAreaFilled(false);
         cmdRegister.setCursor(new Cursor(Cursor.HAND_CURSOR));
         cmdRegister.addActionListener(e -> {
-           UIManager.getInstance().showForm(new Sign_up());
+            UIManager.getInstance().showForm(new Sign_up());
         });
         JLabel label = new JLabel("Don't have an account ?");
         label.putClientProperty(
                 FlatClientProperties.STYLE,
                 "" + "[light]foreground: lighten(@foreground, 30%);"
-                + "[dark]foreground: darken(@foreground, 30%);"
+                        + "[dark]foreground: darken(@foreground, 30%);"
         );
 
         panel.add(label);

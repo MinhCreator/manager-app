@@ -1,38 +1,34 @@
 package minhcreator.component.menu;
 
-import minhcreator.component.menu.mode.LightDarkMode;
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.formdev.flatlaf.util.UIScale;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.LayoutManager;
+import minhcreator.component.menu.mode.LightDarkMode;
+import minhcreator.component.menu.mode.ToolBarAccentColor;
+import minhcreator.util.Shared;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import minhcreator.component.menu.mode.ToolBarAccentColor;
 
 /**
  *
  * @author Raven
  */
 public class Menu extends JPanel {
+    private final String welcome = "Welcome Back" + Shared.login_username;
 
     private final String menuItems[][] = {
-//        {"~Overview~"},
-        {"Dashboard"},
+//            {""},
+            {"Dashboard"},
 //        {"~Warehouse Management~"},
 //        {"Inventory", "Inbox", "Read", "Compost"},
-        {"Inventory"},
-        {"Analytics"},
-        {"Stock"},
-        {"Report"},
+            {"Inventory"},
+            {"Analytics"},
+            {"Stock report"},
+            {"Settings"},
 //        {"~COMPONENT~"},
 //        {"Advanced UI", "Cropper", "Owl Carousel", "Sweet Alert"},
 //        {"Forms", "Basic Elements", "Advanced Elements", "Editors", "Wizard"},
@@ -40,7 +36,6 @@ public class Menu extends JPanel {
 //        {"Charts", "Apex", "Flot", "Peity", "Sparkline"},
 //        {"Icons", "Feather Icons", "Flag Icons", "Mdi Icons"},
 //        {"Special Pages", "Blank page", "Faq", "Invoice", "Profile", "Pricing", "Timeline"},
-        {"Logout"}
     };
 
     public boolean isMenuFull() {
@@ -87,7 +82,7 @@ public class Menu extends JPanel {
                 + "background:$Menu.background;"
                 + "arc:10");
         header = new JLabel(headerName);
-        header.setIcon(new ImageIcon(getClass().getResource("/minhcreator/assets/icon/png/logo.png")));
+        header.setIcon(new FlatSVGIcon("minhcreator/assets/brand/MUI_Logo.svg"));
         header.putClientProperty(FlatClientProperties.STYLE, ""
                 + "font:$Menu.header.font;"
                 + "foreground:$Menu.foreground");
@@ -96,7 +91,7 @@ public class Menu extends JPanel {
         scroll = new JScrollPane();
         panelMenu = new JPanel(new MenuItemLayout(this));
         panelMenu.putClientProperty(FlatClientProperties.STYLE, ""
-                + "border:5,5,5,5;"
+                + "border:0,0,0,0;"
                 + "background:$Menu.background");
 
         scroll.setViewportView(panelMenu);
@@ -249,7 +244,7 @@ public class Menu extends JPanel {
                 int hgap = menuFull ? sheaderFullHgap : 0;
                 int accentColorHeight = 0;
                 if (toolBarAccentColor.isVisible()) {
-                    accentColorHeight = toolBarAccentColor.getPreferredSize().height+gap;
+                    accentColorHeight = toolBarAccentColor.getPreferredSize().height + gap;
                 }
 
                 header.setBounds(x + hgap, y, iconWidth - (hgap * 2), iconHeight);
@@ -257,7 +252,7 @@ public class Menu extends JPanel {
                 int ldWidth = width - ldgap * 2;
                 int ldHeight = lightDarkMode.getPreferredSize().height;
                 int ldx = x + ldgap;
-                int ldy = y + height - ldHeight - ldgap  - accentColorHeight;
+                int ldy = y + height - ldHeight - ldgap - accentColorHeight;
 
                 int menux = x;
                 int menuy = y + iconHeight + gap;

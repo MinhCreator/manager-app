@@ -3,22 +3,18 @@ package minhcreator.component.form;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.util.UIScale;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.ComponentOrientation;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.LayoutManager;
-import java.awt.event.ActionEvent;
-import javax.swing.JButton;
-import javax.swing.JLayeredPane;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-import minhcreator.main.Application;
-import minhcreator.component.form.other.*;
+import minhcreator.component.form.other.AnalyticsForm;
+import minhcreator.component.form.other.FormDashboard;
+import minhcreator.component.form.other.ReportForm;
+import minhcreator.component.form.other.WarehouseInventoryForm;
 import minhcreator.component.menu.Menu;
 import minhcreator.component.menu.MenuAction;
+import minhcreator.main.Application;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.awt.event.ActionEvent;
 
 /**
  *
@@ -44,6 +40,7 @@ public class MainForm extends JLayeredPane {
         menuButton.addActionListener((ActionEvent e) -> {
             setMenuFull(!menu.isMenuFull());
         });
+        menuButton.setLocation(1, 50);
         initMenuEvent();
         setLayer(menuButton, JLayeredPane.POPUP_LAYER);
         add(menuButton);
@@ -85,16 +82,16 @@ public class MainForm extends JLayeredPane {
 //                action.cancel();
 //            }
             // My custom logic menu
-            if(index == 0) {
+            if (index == 0) {
                 Application.showForm(new FormDashboard());
             } else if (index == 1) {
                 Application.showForm(new WarehouseInventoryForm());
             } else if (index == 2) {
                 Application.showForm(new AnalyticsForm());
             } else if (index == 3) {
-                Application.showForm(new StockForm());
-            } else if (index == 4) {
                 Application.showForm(new ReportForm());
+            } else if (index == 4) {
+                Application.showForm(new settings());
             } else {
                 action.cancel();
             }

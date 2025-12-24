@@ -1,24 +1,41 @@
 package minhcreator.component.form;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import minhcreator.UIManager.UIManager;
-import minhcreator.component.Alert.FieldCheck;
 import minhcreator.component.PasswordStrengthStatus;
+import minhcreator.functional.database.DB;
+import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
 import net.miginfocom.swing.MigLayout;
 import raven.toast.Notifications;
+
 import javax.swing.*;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class Sign_up extends JPanel{
+public class Sign_up extends JPanel {
+    private static Sign_up signUp;
+    public JTextField txtUsername;
+    public JTextField txtEmail;
+    public JPasswordField txtPassword;
+    private JPasswordField txtConfirmPassword;
+    private JButton cmdRegister;
+    private PasswordStrengthStatus passwordStrengthStatus;
+    // regex email checking
+    private static String regex = "^\\w+[A-Za-z8-9+_.-]+@[A-Za-z8-9.-]+$";
+    public static sessionManager session;
+    // regex username checking
+    private static String regexU = "^[A-Za-z8-9+_.-]+$";
+
+
     public Sign_up() {
         init();
     }
 
-    private void init(){
+    private void init() {
         setLayout(
                 new MigLayout(
                         "fill, insets 20",
@@ -70,16 +87,14 @@ public class Sign_up extends JPanel{
                 "innerFocusWidth:0"
         );
 
-        cmdRegister.addActionListener(e -> {
-           cmdRegisterPerformed(e);
-        });
+
 //        cmdRegister.doClick();
         JLabel lbtitle = new JLabel("Welcome to Admin dashboard!");
         JLabel desc = new JLabel("Super easy admin dashboard!");
 
         lbtitle.putClientProperty(
                 FlatClientProperties.STYLE,
-                "" + "font:bold +10"
+                "" + "font:bold +12"
         );
 
         desc.putClientProperty(
@@ -88,6 +103,11 @@ public class Sign_up extends JPanel{
                         + "[dark]foreground: darken(@foreground, 30%);"
         );
         passwordStrengthStatus.initPasswordField(txtPassword);
+
+        cmdRegister.addActionListener(e -> {
+            cmdRegisterPerformed();
+
+        });
 
         panel.add(lbtitle);
         panel.add(desc);
@@ -106,10 +126,10 @@ public class Sign_up extends JPanel{
         add(panel);
     }
 
-    private Component createLoginLabel(){
+    private Component createLoginLabel() {
         JPanel panel = new JPanel(
                 new FlowLayout(
-                        FlowLayout.CENTER,0,0
+                        FlowLayout.CENTER, 0, 0
                 )
         );
         panel.putClientProperty(
@@ -124,7 +144,7 @@ public class Sign_up extends JPanel{
         );
         cmdRegister.putClientProperty(
                 FlatClientProperties.STYLE,
-                "" + "border:3,3,3,3"
+                "" + "border:0,0,0,0"
         );
         cmdRegister.setContentAreaFilled(false);
         cmdRegister.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -144,7 +164,7 @@ public class Sign_up extends JPanel{
         return panel;
     }
 
-    private void cmdRegisterPerformed(java.awt.event.ActionEvent evt) {
+    private void cmdRegisterPerformed() {
         String username = txtUsername.getText().trim();
         String email = txtEmail.getText().trim();
 
@@ -156,11 +176,14 @@ public class Sign_up extends JPanel{
                         txtPassword.getPassword().length > 0 &&
                         txtPassword.getPassword().length <= 20 &&
                         isMatchPassword()
-        ){
+        ) {
+            Register();
+            Application.logout();
+            Notifications.getInstance().show(Notifications.Type.SUCCESS, "Register successfully! and you will be redirected to login page");
+            session = new sessionManager();
+            session.register(username, email, new String(txtPassword.getPassword()));
 
-            JOptionPane.showMessageDialog(this, "Register successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-
-        }else {
+        } else {
             Notifications.getInstance().show(Notifications.Type.ERROR, "Something went wrong. Try again!");
         }
     }
@@ -174,47 +197,79 @@ public class Sign_up extends JPanel{
         return pass.equals(confirmPass);
     }
 
-    public Sign_up getInstance(){
+    public Sign_up getInstance() {
         return signUp;
     }
 
-    public boolean emailCheck(String email){
+    public static boolean emailCheck(String email) {
         Pattern pattern = Pattern.compile(regex);
         Matcher match = pattern.matcher(email);
 
-        if(match.matches()) {
+        if (match.matches()) {
             return true;
         } else {
-            JOptionPane.showMessageDialog(this, "Invalid email", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }
 
-    public boolean usernameCheck(String username) {
+    public static boolean usernameCheck(String username) {
         Pattern pattern = Pattern.compile(regexU);
         Matcher match = pattern.matcher(username);
         Boolean space = username.contains(" ");
 
-        if(match.matches() && !space) {
+        if (match.matches() && !space) {
             return true;
-        } else{
-            JOptionPane.showMessageDialog(this, "Invalid username", "Error", JOptionPane.ERROR_MESSAGE);
+        } else {
             return false;
         }
     }
 
-    private static Sign_up signUp;
-    public JTextField txtUsername;
-    public JTextField txtEmail;
-    public JPasswordField txtPassword;
-    private JPasswordField txtConfirmPassword;
-    private JButton cmdRegister;
-    private PasswordStrengthStatus passwordStrengthStatus;
-    // regex email checking
-    private String regex = "^\\w+[A-Za-z8-9+_.-]+@[A-Za-z8-9.-]+$";
+    private void Register() {
+        String username = txtUsername.getText().trim();
+        String email = txtEmail.getText().trim();
+        String password = new String(txtPassword.getPassword());
+        System.out.println(username + " " + email + " " + password);
 
-    // regex username checking
-    private String regexU = "^[A-Za-z8-9+_.-]+$";
+
+        String sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+        try (Connection conn = new DB().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (conn == null) return;
+            ps.setString(1, username);
+            ps.setString(2, email);
+            ps.setString(3, password);
+            ps.executeUpdate();
+            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Sign up successful");
+
+
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+
+    }
+
+    public String getUserName() {
+        String username = txtUsername.getText().trim();
+        String email = txtEmail.getText().trim();
+        String sql = "SELECT username FROM users WHERE email = ?";
+        String sql2 = "SELECT username FROM users WHERE username = ?";
+        try (Connection conn = new DB().getConnection()) {
+            if (emailCheck(username)) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setString(1, username);
+
+                return ps.executeQuery().toString();
+            } else if (usernameCheck(username)) {
+                PreparedStatement ps = conn.prepareStatement(sql2);
+                ps.setString(1, username);
+                return ps.executeQuery().toString();
+            } else {
+                return null;
+            }
+
+        } catch (Exception e) {
+            // TODO: handle exception
+            return null;
+        }
+
+    }
 }
-
-

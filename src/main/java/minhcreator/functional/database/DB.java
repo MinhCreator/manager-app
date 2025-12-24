@@ -1,153 +1,89 @@
 package minhcreator.functional.database;
 
-import minhcreator.component.CustomDialog;
-import raven.toast.*;
-import minhcreator.main.Application;
+import raven.toast.Notifications;
+
 import java.sql.*;
-import java.util.Arrays;
-import java.util.List;
 
 public class DB {
-    public Connection conn;
+    public static Connection conn = null;
     public Statement stmt;
+    public PreparedStatement pstmt;
+    private static final String DB_URL = "jdbc:mysql://localhost/warehouse";
+    private static final String USER = "root";
+    private static final String PASSWORD = "";
 
-    public void getDBConnect(String host,String DBType, String DBName, String su, String pass){
-        try {
-            conn = DriverManager.getConnection("jdbc:" + DBType + "://" + host + "/" + DBName, su, pass);
-//
-
-            CustomDialog noice = new CustomDialog(
-                    Application.getInstance(),
-                    true,
-                    "Database",
-                    "Database connected successfully",
-                    "minhcreator/assets/debug/success.svg",
-                    "ok",
-                    arr
-            );
-
-        } catch (Exception e) {
-//
-            CustomDialog noice = new CustomDialog(
-                    Application.getInstance(),
-                    true,
-                    "Database",
-                    e.getMessage(),
-                    "minhcreator/assets/debug/Error.svg",
-                    "ok",
-                    arr
-            );
+    private static void initializeConnection() throws SQLException {
+        if (conn == null || conn.isClosed()) {
+            conn = DriverManager.getConnection(DB_URL, USER, PASSWORD);
+            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Connection successful");
+        } else {
+            Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, "Connection failed");
         }
     }
 
-    public void getDBConnectNoNotification(String host,String DBType, String DBName, String su, String pass){
-        try {
-            conn = DriverManager.getConnection("jdbc:" + DBType + "://" + host + "/" + DBName, su, pass);
-            System.out.println("Database connected successfully");
-//            CustomDialog noice = new CustomDialog(
-//                    Application.getInstance(),
-//                    true,
-//                    "Database",
-//                    "Database connected successfully",
-//                    "minhcreator/assets/debug/success.svg",
-//                    "ok",
-//                    arr
-//            );
+    public static Connection getConnection() throws SQLException {
+        if (conn == null || conn.isClosed()) {
+            initializeConnection();
+        }
+        return conn;
+    }
 
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-//            CustomDialog noice = new CustomDialog(
-//                    Application.getInstance(),
-//                    true,
-//                    "Database",
-//                    e.getMessage(),
-//                    "minhcreator/assets/debug/Error.svg",
-//                    "ok",
-//                    arr
-//            );
+    // Insert, Update, Delete
+    public int executionSQL(String query) {
+        Connection connection = null;
+        Statement stmt = null;
+        try {
+            connection = getConnection();
+            stmt = connection.createStatement();
+            return stmt.executeUpdate(query);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
+        } finally {
+            closeResources(null, stmt, null);
         }
     }
 
-    // Update, insert, delete
-    public int executionSQL(String Query_cmd) {
-        int result = 0;
-        try {
-            stmt = conn.createStatement();
-            result = stmt.executeUpdate(Query_cmd);
-            CustomDialog noice = new CustomDialog(
-                    Application.getInstance(),
-                    true,
-                    "Database",
-                    "Query executed successfully" + " " + result,
-                    "minhcreator/assets/debug/success.svg",
-                    "ok",
-                    arr
-            );
-        } catch (Exception e) {
-            CustomDialog noice = new CustomDialog(
-                    Application.getInstance(),
-                    true,
-                    "Database",
-                    "Query executed Failure " + e.getMessage(),
-                    "minhcreator/assets/debug/Error.svg",
-                    "ok",
-                    arr
-            );
-        }
-        return result;
-    }
     // Select
-    public ResultSet selectSQL(String Query_cmd) {
+    public ResultSet selectSQL(String query) {
+        Connection connection = null;
+        Statement stmt = null;
         try {
-            if (conn != null){
-                stmt = conn.createStatement();
-                CustomDialog noice = new CustomDialog(
-                        Application.getInstance(),
-                        true,
-                        "Database",
-                        "Query executed successfully" + " " + stmt.executeQuery(Query_cmd).toString(),
-                        "minhcreator/assets/debug/success.svg",
-                        "ok",
-                        arr
-                );
-                return stmt.executeQuery(Query_cmd);
+            connection = getConnection();
+            stmt = connection.createStatement();
+            return stmt.executeQuery(query);
+            // Note: The caller is responsible for closing the ResultSet
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static void closeResources(ResultSet rs, Statement stmt, Connection conn) {
+        try {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            // Don't close the connection here if you want to reuse it
+            // if (conn != null) conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Call this when your application shuts down
+    public static void closeConnection() {
+        try {
+            if (conn != null && !conn.isClosed()) {
+                conn.close();
             }
-        } catch (Exception e) {
-            CustomDialog noice = new CustomDialog(
-                    Application.getInstance(),
-                    true,
-                    "Database",
-                    "Query executed Failure" + "\n" + e.getMessage(),
-                    "minhcreator/assets/debug/Error.svg",
-                    "ok",
-                    arr
-            );
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return null;
     }
 
-    public void closeDBConnect(){
-        try {
-            conn.close();
-            Notifications.getInstance().show(
-                    Notifications.Type.SUCCESS,
-                    Notifications.Location.TOP_CENTER,
-                    "Database closed successfully"
-            );
-        } catch (Exception e) {
-            Notifications.getInstance().show(
-                    Notifications.Type.ERROR,
-                    Notifications.Location.TOP_CENTER,
-                    "Database closed failure" + " " + e.getMessage()
-            );
-        }
-    }
+
     // test
-    public static void main(String[] args){
-        DB db = new DB();
-        db.getDBConnect("localhost", "mysql", "warehouse", "root", "");
-    }
+    public static void main(String[] args) {
 
-    private Integer[] newarr = {50,50};
-    private List<Integer> arr = Arrays.asList(newarr);
+    }
 }

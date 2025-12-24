@@ -2,9 +2,15 @@ package minhcreator.UIManager;
 
 import com.formdev.flatlaf.extras.FlatAnimatedLafChange;
 import minhcreator.main.Application;
-import minhcreator.debugPage.*;
+
 import javax.swing.*;
 import java.awt.*;
+
+/**
+ *
+ * @author Raven
+ * @author Modified by MinhCreatorVN
+ */
 
 public class UIManager {
     private Application app;

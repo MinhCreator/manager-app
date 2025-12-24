@@ -4,14 +4,18 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.formdev.flatlaf.util.UIScale;
-import net.miginfocom.swing.MigLayout;
 import minhcreator.util.MethodUtil;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
+/**
+ *
+ * @author Raven
+ */
 public class PasswordStrengthStatus extends JPanel {
     private JPasswordField passwordField;
     private DocumentListener documentListener;

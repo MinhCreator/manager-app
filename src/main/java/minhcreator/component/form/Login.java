@@ -1,17 +1,25 @@
 package minhcreator.component.form;
-import java.awt.*;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import minhcreator.component.Alert.FieldCheck;
 import minhcreator.component.PopUp;
-import minhcreator.functional.*;
-import net.miginfocom.swing.MigLayout;
+import minhcreator.functional.database.DB;
+import minhcreator.functional.imgRender;
+import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
+import net.miginfocom.swing.MigLayout;
+import raven.toast.Notifications;
+
 import javax.swing.*;
+import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 
 //  ALL OF THIS CODE FILE UNDER EXPERIMENTAL and NOT RECOMMENDED TO USE
-public class Login extends JPanel{
+public class Login extends JPanel {
 
     public Login() {
         init();
@@ -65,13 +73,11 @@ public class Login extends JPanel{
 
         txtUsername = new JTextField();
         txtPassword = new JPasswordField();
-        remember_me = new JCheckBox("Remember me");
-        remember_me.setCursor(new Cursor(Cursor.HAND_CURSOR));
         cmdLogin = new JButton("Login");
 
         panel.putClientProperty(FlatClientProperties.STYLE, "" +
                 "arc: 20;" +
-                "[light]background:darken(@background,3%);" +
+                "[light]background:darken(@background,10%);" +
                 "[dark]background:lighten(@background,3%);"
         );
 
@@ -80,7 +86,8 @@ public class Login extends JPanel{
                 "[dark]foreground: darken(@foreground, 10%);" +
                 "borderWidth:0;" +
                 "focusWidth:0;" +
-                "innerFocusWidth:0"
+                "innerFocusWidth:0;" +
+                "selectedBackground: darken(@background, 30%)"
         );
 
         cmdLogin.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -93,7 +100,7 @@ public class Login extends JPanel{
                 "showRevealButton:true"
         );
 
-        txtUsername.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your username or email please");
+        txtUsername.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your email please");
         txtPassword.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your password please");
 
         JLabel lbtitle = new JLabel("Welcome back!");
@@ -102,7 +109,7 @@ public class Login extends JPanel{
 
         lbtitle.putClientProperty(
                 FlatClientProperties.STYLE,
-                "" + "font:bold +10"
+                "" + "font:bold +12"
         );
 
         desc.putClientProperty(
@@ -117,12 +124,8 @@ public class Login extends JPanel{
         panel.add(txtUsername);
         panel.add(new JLabel("Password"), "gapy 8");
         panel.add(txtPassword);
-        panel.add(remember_me, "gapx 10");
-//        panel.add(UserAgreement, "split 2");
         panel.add(createUserAgreement(), "gapx 0");
-
         panel.add(cmdLogin, "gapy 10");
-
         panel.add(createSignupLabel(), "gapy 10");
         add(panel);
 
@@ -132,7 +135,7 @@ public class Login extends JPanel{
     private Component createSignupLabel() {
         JPanel panel = new JPanel(
                 new FlowLayout(
-                        FlowLayout.CENTER,0,0
+                        FlowLayout.CENTER, 0, 0
                 )
         );
         panel.putClientProperty(
@@ -147,14 +150,13 @@ public class Login extends JPanel{
         );
         cmdRegister.putClientProperty(
                 FlatClientProperties.STYLE,
-                "" + "border:3,3,3,3"
+                "" + "border:0,0,0,0"
         );
         cmdRegister.setContentAreaFilled(false);
         cmdRegister.setCursor(new Cursor(Cursor.HAND_CURSOR));
         cmdRegister.addActionListener(e -> {
             Application.signup();
         });
-
 
 
         JLabel label = new JLabel("Don't have an account ?");
@@ -172,7 +174,7 @@ public class Login extends JPanel{
     private Component createUserAgreement() {
         JPanel panel = new JPanel(
                 new FlowLayout(
-                        FlowLayout.LEFT,10,0
+                        FlowLayout.LEFT, 10, 0
                 )
         );
         panel.putClientProperty(
@@ -190,14 +192,13 @@ public class Login extends JPanel{
         );
         Trigger_UA_dialog.putClientProperty(
                 FlatClientProperties.STYLE,
-                "" + "border:2,2,2,2"
+                "" + "border:0,0,0,0"
         );
 
         Trigger_UA_dialog.setContentAreaFilled(false);
         Trigger_UA_dialog.setCursor(new Cursor(Cursor.HAND_CURSOR));
         Trigger_UA_dialog.addActionListener(e -> {
-//                Notifications.getInstance().show(Notifications.Type.SUCCESS, Notifications.Location.TOP_CENTER, "User Agreement");
-                UA_dialog();
+            UA_dialog();
         });
 
         panel.add(UserAgreement);
@@ -207,10 +208,9 @@ public class Login extends JPanel{
     }
 
     private Component UA_dialog() {
-        PopUp popUp = new PopUp(Application.getInstance(), "User Agreement", 700, 650);
-//        popUp.initFrame("User Agreement", 700, 650);
+        PopUp popUp = new PopUp(Application.getInstance(), "", 760, 600);
         popUp.setLayout(new MigLayout(
-                "fill, insets 20",
+                "fill, insets 20 20 20 20",
                 "[center]",
                 "[center]"
         ));
@@ -218,7 +218,7 @@ public class Login extends JPanel{
         JPanel panel = new JPanel();
 
         panel.setLayout(new MigLayout(
-                "fill, insets 20",
+                "fill, insets 30",
                 "[center]",
                 "[center]"
         ));
@@ -229,9 +229,9 @@ public class Login extends JPanel{
                 "[dark]background:lighten(@background,3%);"
         );
         JLabel lb = new JLabel("User Agreement");
-        lb.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         lb.setFont(new Font("JetBrainsMono", Font.BOLD, 20));
-        panel.add(lb, BorderLayout.NORTH);
+
         String content = "\n" +
                 "Copyright (c) [2025] [MinhCreatorVN]\n" +
                 "\n" +
@@ -255,64 +255,244 @@ public class Login extends JPanel{
         JTextArea textArea = new JTextArea(content);
 
         textArea.setEditable(false);
-        textArea.setFont(new Font("JetBrainsMono", Font.BOLD, 12));
-        panel.add(textArea);
+        textArea.setFont(new Font("JetBrainsMono", Font.BOLD, 13));
+        textArea.setFocusable(false);
+        panel.add(lb, "wrap");
+        panel.add(textArea, "center, wrap");
 
         JButton close = new JButton("Close");
+        close.setSize(50, 50);
+        close.putClientProperty(FlatClientProperties.STYLE, "" +
+                "borderWidth: 0;" +
+                "disabledBorderColor: @background;"
+        );
         close.addActionListener(_ -> {
             popUp.dispose();
         });
-        panel.add(close, BorderLayout.SOUTH);
+        panel.add(close, "center");
         popUp.add(panel);
         return popUp;
     }
 
     private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {
-//        DB db = new DB();
-//        db.getDBConnect("localhost", "mysql", "warehouse", "root", "");
-//        Application.login();
         isValidLogin();
-
+        session = new sessionManager();
+        String email = txtUsername.getText().trim();
+        String user = getUserUsername(email);
+        String pass = getUserUserPass(txtUsername.getText().trim());
+        String id = getId(email);
+        session.login(id, user, email, pass);
     }
 
     public static Login getInstance() {
         return login;
     }
 
-    public void isValidLogin(){
-        FieldCheck fieldCheck = new FieldCheck();
+    public void isValidLogin() {
+        String getInputBox = txtUsername.getText().trim();
+        String getPass = new String(txtPassword.getPassword()).trim();
+        boolean isAgree = UserAgreement.isSelected();
+        String match = matchText(getInputBox);
         String sucMess = "Login successfully";
         String errMess = "Invalid username or password";
-        if (txtUsername.getText().trim().isEmpty() || new String(txtPassword.getPassword()).trim().isEmpty()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Please enter username and password",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        } else if (fieldCheck.fusionCheckNoDialog(txtUsername.getText().trim())) {
-            if (UserAgreement.isSelected()) {
-                Application.login();
-            } else JOptionPane.showMessageDialog(
-                    this,
-                    "Please accept user agreement",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        } else JOptionPane.showMessageDialog(
-                this,
-                "Invalid username or email",
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-        );
 
+        if (!getInputBox.isEmpty() && !getPass.isEmpty()) {
+
+            if (isAgree) {
+                if (match.equals("email")) {
+                    attemp_Email_Login();
+                    Notifications.getInstance().show(Notifications.Type.SUCCESS, Notifications.Location.TOP_CENTER, sucMess);
+                } else {
+                    Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, "Login failed");
+                }
+            } else {
+                Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, "Please agree to our User Agreement");
+            }
+        } else {
+            Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, "Please fill in all fields");
+        }
+    }
+
+    public void attemp_User_Login() {
+        String usName = txtUsername.getText().trim();
+        String email = txtUsername.getText().trim();
+        String pass = new String(txtPassword.getPassword()).trim();
+
+        String query = "SELECT password FROM users WHERE username = ?";
+        try (Connection conn = new DB().getConnection()) {
+            PreparedStatement pst = conn.prepareStatement(query);
+            pst.setString(1, usName);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    if (rs.getString("password").equals(pass) && doesUsernameExist(usName)) {
+                        Application.login();
+                    } else {
+                        Notifications.getInstance().show(
+                                Notifications.Type.ERROR,
+                                Notifications.Location.TOP_CENTER,
+                                "Invalid username or password"
+                        );
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public boolean doesUsernameExist(String username) {
+        // The SQL query to count matching usernames
+        String query = "SELECT COUNT(username) FROM users WHERE username = ?";
+
+        // Use try-with-resources for automatic closing of connections and statements
+        try (Connection conn = new DB().getConnection(); PreparedStatement pst = conn.prepareStatement(query)) {
+
+            // Set the username parameter safely
+            pst.setString(1, username);
+
+            // Execute the query
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1); // Get the value of the first (and only) column
+
+                    if (count > 0) {
+                        return true; // Username exists
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("Database Error during username check: " + ex.getMessage());
+
+        }
+        return false; // Username is Unavailable in table
+    }
+
+    public void attemp_Email_Login() {
+
+        String email = txtUsername.getText().trim();
+        String pass = new String(txtPassword.getPassword()).trim();
+
+        String query = "SELECT password FROM users WHERE email = ?";
+        try (Connection conn = new DB().getConnection()) {
+            PreparedStatement pst = conn.prepareStatement(query);
+            pst.setString(1, email);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    if (rs.getString("password").equals(pass) && does_Email_Exist(email)) {
+                        Application.login();
+                    } else {
+                        Notifications.getInstance().show(
+                                Notifications.Type.ERROR,
+                                Notifications.Location.TOP_CENTER,
+                                "Invalid username or password"
+                        );
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public boolean does_Email_Exist(String email) {
+        // The SQL query to count matching usernames
+        String query = "SELECT COUNT(email) FROM users WHERE email = ?";
+
+        // Use try-with-resources for automatic closing of connections and statements
+        try (Connection conn = new DB().getConnection(); PreparedStatement pst = conn.prepareStatement(query)) {
+
+            // Set the email parameter safely
+            pst.setString(1, email);
+
+            // Execute the query
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1); // Get the value of the first (and only) column
+
+                    if (count > 0) {
+                        return true; // Username exists
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("Database Error during username check: " + ex.getMessage());
+
+        }
+        return false; // Username is Unavailable in table
+    }
+
+    public String matchText(String text) {
+
+        if (fieldCheck.usernameCheck(text)) {
+            return "username";
+        } else if (fieldCheck.emailCheck(text)) {
+            return "email";
+        } else {
+            return "invalid";
+        }
+    }
+
+    public String getUserUsername(String email) {
+        String sql = "SELECT username FROM users WHERE email = ?";
+        try (Connection conn = new DB().getConnection(); PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setString(1, email);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("username");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return null;
+    }
+
+    public String getUserUserPass(String email) {
+        String sql = "SELECT password FROM users WHERE email = ?";
+        try (Connection conn = new DB().getConnection(); PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setString(1, email);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("password");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return null;
+    }
+
+    public String getId(String email) {
+        String execution = "SELECT id FROM users WHERE email = ?";
+        try (Connection conn = new DB().getConnection(); PreparedStatement pst = conn.prepareStatement(execution)) {
+            pst.setString(1, email);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("id");
+                }
+            }
+        } catch (Exception e) {
+            return null;
+        }
+
+        return null;
     }
 
 
     private static Login login;
     public JTextField txtUsername;
     public JPasswordField txtPassword;
-    private JCheckBox remember_me;
     private JCheckBox UserAgreement;
     private JButton cmdLogin;
+    public DB database = new DB();
+    FieldCheck fieldCheck = new FieldCheck();
+    public Connection conn = null;
+    public static sessionManager session;
+
 }

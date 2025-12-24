@@ -2,7 +2,11 @@ package minhcreator.component;
 
 import javax.swing.*;
 
-public class PopUp extends JDialog{
+/**
+ *
+ * @author MinhCreatorVN
+ */
+public class PopUp extends JDialog {
     private JFrame parent;
     private JComponent main;
     private String title;
@@ -43,8 +47,8 @@ public class PopUp extends JDialog{
 
 
     // experimental function
-    public static void main(String[] arg){
-//        PopUp popUp = new PopUp();
-//        popUp.initFrame("PopUp", 400, 300);
+    public static void main(String[] arg) {
+        PopUp popUp = new PopUp(new JPanel(), "", 400, 300);
+        popUp.initFrame();
     }
 }

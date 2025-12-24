@@ -2,23 +2,11 @@ package minhcreator.component.menu;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.util.UIScale;
-import java.awt.BasicStroke;
-import java.awt.Component;
-import java.awt.ComponentOrientation;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Insets;
-import java.awt.LayoutManager;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.geom.Path2D;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.SwingUtilities;
 
 /**
  *
@@ -48,7 +36,7 @@ public class PopupSubmenu extends JPanel {
                 + "background:$Menu.background;"
                 + "borderColor:$Menu.background;");
         putClientProperty(FlatClientProperties.STYLE, ""
-                + "border:0,3,0,3;"
+                + "border:0,0,0,0;"
                 + "background:$Menu.background;"
                 + "foreground:$Menu.lineColor");
         for (int i = 1; i < menus.length; i++) {

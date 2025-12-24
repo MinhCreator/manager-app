@@ -1,23 +1,27 @@
 package minhcreator.main;
 
-import java.util.*;
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.extras.FlatAnimatedLafChange;
 import com.formdev.flatlaf.fonts.jetbrains_mono.FlatJetBrainsMonoFont;
-import com.formdev.flatlaf.themes.FlatMacDarkLaf;
-import minhcreator.functional.*;
-import com.formdev.flatlaf.*;
-import com.formdev.flatlaf.extras.*;
-import javax.swing.SwingUtilities;
-import minhcreator.component.form.*;
-import minhcreator.UIManager.UIManager;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
+import minhcreator.component.form.Login;
+import minhcreator.component.form.MainForm;
+import minhcreator.component.form.Sign_up;
+import minhcreator.functional.FontManager;
+import minhcreator.util.global;
 import raven.toast.Notifications;
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.Dictionary;
 
 public class Application extends JFrame {
     private static Application app;
     private final MainForm mainForm;
     private final Login loginForm;
     private final Sign_up signUpForm;
+
     public Application() {
         this.Config = global.Config("/minhcreator/config", "appConfig.properties");
         this.width = Integer.parseInt(Config.get("width"));
@@ -36,7 +40,6 @@ public class Application extends JFrame {
         setTitle(Config.get("title"));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         pack();
-//        UIManager.getInstance().initApplication(this);
         initComponents();
         setContentPane(loginForm);
         getRootPane().putClientProperty(FlatClientProperties.FULL_WINDOW_CONTENT, false);
@@ -81,7 +84,6 @@ public class Application extends JFrame {
     public static Application getInstance() {
         return app;
     }
-    @SuppressWarnings("unchecked")
 
     private void initComponents() {
 
@@ -103,6 +105,7 @@ public class Application extends JFrame {
 
     static void main(String[] args) {
         FlatJetBrainsMonoFont.install();
+//        FlatArcIJTheme.setup();
         FlatLaf.registerCustomDefaultsSource("minhcreator.themes");
 //        javax.swing.UIManager.put(
 //                "defaultFont",
@@ -112,7 +115,7 @@ public class Application extends JFrame {
 //        );
 
         FontManager.LoadFont("defaultFont", FlatJetBrainsMonoFont.FAMILY, Font.PLAIN, 13);
-        FlatMacDarkLaf.setup();
+        FlatMacLightLaf.setup();
         //FlatLightLaf.setup();
 //        EventQueue.invokeLater(() -> {
 //            app = new Application();
@@ -121,7 +124,7 @@ public class Application extends JFrame {
 
         java.awt.EventQueue.invokeLater(() -> {
             app = new Application();
-            //  app.applyComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+//            app.applyComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
             app.setVisible(true);
         });
 

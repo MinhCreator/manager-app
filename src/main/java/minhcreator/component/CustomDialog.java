@@ -7,8 +7,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+/**
+ *
+ * @author MinhCreatorVN
+ */
 public class CustomDialog extends javax.swing.JDialog {
-    public CustomDialog(JFrame parent, boolean modal, String Header, String message, String iconic_path, String buttonText, List<Integer> ScaleSVG ) {
+    public CustomDialog(JFrame parent, boolean modal, String Header, String message, String iconic_path, String buttonText, List<Integer> ScaleSVG) {
         super(parent, modal);
         this.Header = Header;
         this.message = message;
@@ -31,10 +35,16 @@ public class CustomDialog extends javax.swing.JDialog {
         settings();
     }
 
+    public CustomDialog() {
+        initComponent();
+        settings();
+    }
+
     public void settings() {
         setLocationRelativeTo(parent);
         setVisible(true);
     }
+
     private void initComponent() {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         FlatSVGIcon icon = new FlatSVGIcon(iconic_path, width, height);
@@ -55,7 +65,7 @@ public class CustomDialog extends javax.swing.JDialog {
         Header.setHorizontalAlignment(SwingConstants.CENTER);
         Header.setText(this.Header);
 
-        message.setFont(new Font(FlatJetBrainsMonoFont.FAMILY, Font.PLAIN, 12)); // NOI18N
+        message.setFont(new Font(FlatJetBrainsMonoFont.FAMILY, Font.PLAIN, 13)); // NOI18N
         message.setForeground(new java.awt.Color(143, 143, 143));
         message.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         message.setText(this.message);
@@ -146,11 +156,12 @@ public class CustomDialog extends javax.swing.JDialog {
 
         pack();
     }
-    private String message;
-    private String Header;
-    private String iconic_path;
-    private String buttonText;
-    private JFrame parent;
+
+    private static String message;
+    private static String Header;
+    private static String iconic_path;
+    private static String buttonText;
+    private static JFrame parent;
     private int width;
     private int height;
 }

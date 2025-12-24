@@ -17,15 +17,15 @@ public class FieldCheck {
     // create app instanced
     private Application app = Application.getInstance();
 
-    public boolean emailCheck(String email){
+    public boolean emailCheck(String email) {
         Pattern pattern = Pattern.compile(regex);
         Matcher match = pattern.matcher(email);
 
-        if(match.matches()) {
-            JOptionPane.showMessageDialog(app, "email is valid", "Success", JOptionPane.INFORMATION_MESSAGE);
+        if (match.matches()) {
+//            JOptionPane.showMessageDialog(app, "email is valid", "Success", JOptionPane.INFORMATION_MESSAGE);
             return true;
         } else {
-            JOptionPane.showMessageDialog(app, "Invalid email", "Error", JOptionPane.ERROR_MESSAGE);
+//            JOptionPane.showMessageDialog(app, "Invalid email", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }
@@ -35,23 +35,23 @@ public class FieldCheck {
         Matcher match = pattern.matcher(username);
         Boolean space = username.contains(" ");
 
-        if(match.matches() && !space) {
-            JOptionPane.showMessageDialog(app, "username is valid", "Success", JOptionPane.INFORMATION_MESSAGE);
+        if (match.matches() && !space) {
+//            JOptionPane.showMessageDialog(app, "username is valid", "Success", JOptionPane.INFORMATION_MESSAGE);
             return true;
-        } else{
-            JOptionPane.showMessageDialog(app, "Invalid username", "Error", JOptionPane.ERROR_MESSAGE);
+        } else {
+//            JOptionPane.showMessageDialog(app, "Invalid username", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }
 
-    public boolean fusionCheck(String obj, String successMess, String errorMess){
+    public boolean fusionCheck(String obj, String successMess, String errorMess) {
         Pattern Emailpattern = Pattern.compile(regex);
         Pattern Userpattern = Pattern.compile(regexU);
         Matcher Emailmatch = Emailpattern.matcher(obj);
         Matcher Usermatch = Userpattern.matcher(obj);
         Boolean space = obj.contains(" ");
 
-        if(Emailmatch.matches() || Usermatch.matches() && !space) {
+        if (Emailmatch.matches() || Usermatch.matches() && !space) {
             JOptionPane.showMessageDialog(app, successMess, "Success", JOptionPane.INFORMATION_MESSAGE);
             return true;
         } else {
@@ -60,7 +60,7 @@ public class FieldCheck {
         }
     }
 
-    public boolean fusionCheckNoDialog(String obj){
+    public boolean fusionCheckNoDialog(String obj) {
         Pattern Emailpattern = Pattern.compile(regex);
         Pattern Userpattern = Pattern.compile(regexU);
         Matcher Emailmatch = Emailpattern.matcher(obj);

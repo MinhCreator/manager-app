@@ -1,6 +1,8 @@
 package minhcreator.component.form.other;
+
 import com.formdev.flatlaf.FlatClientProperties;
 import raven.toast.Notifications;
+
 /**
  *
  * @author Raven
@@ -55,11 +57,11 @@ public class FormDashboard extends javax.swing.JPanel {
     }
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
-        Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Hello sample message");
+        WarehouseInventoryForm.OnReadyUpdate();
+        Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, WarehouseInventoryForm.exportData().toString());
     }
 
 
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel lb;
 }
-
