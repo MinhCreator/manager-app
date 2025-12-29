@@ -12,16 +12,16 @@ public class DB {
     private static final String USER = "root";
     private static final String PASSWORD = "";
 
-    private static void initializeConnection() throws SQLException {
+    private synchronized static void initializeConnection() throws SQLException {
         if (conn == null || conn.isClosed()) {
             conn = DriverManager.getConnection(DB_URL, USER, PASSWORD);
-            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Connection successful");
+//            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Connection successful");
         } else {
             Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, "Connection failed");
         }
     }
 
-    public static Connection getConnection() throws SQLException {
+    public synchronized static Connection getConnection() throws SQLException {
         if (conn == null || conn.isClosed()) {
             initializeConnection();
         }
@@ -55,6 +55,7 @@ public class DB {
             // Note: The caller is responsible for closing the ResultSet
         } catch (SQLException e) {
             e.printStackTrace();
+            Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, e.getMessage());
             return null;
         }
     }

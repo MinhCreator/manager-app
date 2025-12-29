@@ -48,6 +48,7 @@ public class MainForm extends JLayeredPane {
         add(panelBody);
     }
 
+
     @Override
     public void applyComponentOrientation(ComponentOrientation o) {
         super.applyComponentOrientation(o);
@@ -128,6 +129,7 @@ public class MainForm extends JLayeredPane {
     private Menu menu;
     private JPanel panelBody;
     private JButton menuButton;
+
 
     private class MainFormLayout implements LayoutManager {
 

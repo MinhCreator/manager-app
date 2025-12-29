@@ -4,7 +4,9 @@ package minhcreator.component.form.other;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import minhcreator.component.stock.StockStatus;
 import minhcreator.component.stock.TableBadgeCellRenderer;
+import minhcreator.functional.TimeManager;
 import minhcreator.functional.database.DB;
+import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
 import minhcreator.util.Shared;
 import net.miginfocom.swing.MigLayout;
@@ -18,6 +20,8 @@ import java.sql.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Vector;
+
+import static minhcreator.component.form.Login.login;
 
 public class WarehouseInventoryForm extends javax.swing.JPanel {
     private static JTable table = new JTable();
@@ -141,6 +145,12 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
         return bottomPanel;
     }
 
+    public static sessionManager get_user() {
+        sessionManager get = login.getInstance().session;
+        System.out.println();
+        return login.getInstance().session;
+    }
+
     private static void loadTableData_SQL(String sql) {
 
         try (ResultSet rs = new DB().selectSQL(sql)) {
@@ -220,7 +230,8 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
 
     public static void OnReadyUpdate() {
 
-        loadTableData_SQL("SELECT * FROM users_inventory");
+//        loadTableData_SQL("SELECT * FROM users_inventory");
+        loadTableData_SQL("SELECT * FROM " + get_user().getYour_inventory());
     }
 
     public void UpdateTableModel(ResultSet rs) {
@@ -276,7 +287,9 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
                 throw new RuntimeException(ex);
             }
             if (conn == null) return;
-            String sql = "INSERT INTO users_inventory (id, name, price, amount) VALUES (?, ?, ?, ?)";
+            // insert to user inventory
+            String sql = "INSERT INTO " + get_user().getYour_inventory() + " (id, name, price, amount) VALUES (?, ?, ?, ?)";
+            import_goods(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, StockIDField.getText().trim());
                 ps.setString(2, StockNameField.getText().trim());
@@ -356,7 +369,8 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
             }
             if (conn == null) return;
 
-            String sql = "UPDATE users_inventory SET name=?, price=?, amount=? WHERE id=?";
+//            String sql = "UPDATE users_inventory SET name=?, price=?, amount=? WHERE id=?";
+            String sql = "UPDATE " + get_user().getYour_inventory() + " SET name=?, price=?, amount=? WHERE id=?";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, StockNameField.getText().trim());
                 ps.setString(2, StockPriceField.getText().trim());
@@ -397,14 +411,13 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
             boolean isSelected = (boolean) model.getValueAt(i, 0);
             if (isSelected) {
                 hasSelection = true;
-//                String stockID = .toString();
                 selected_ID_Rows.add(model.getValueAt(i, 1).toString());
 
             }
         }
         deleteSelectedItems(selected_ID_Rows);
         if (!hasSelection) {
-            JOptionPane.showMessageDialog(this, "Please select at least one row to delete.");
+            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Please select at least one row to delete.");
             return;
         }
     }
@@ -420,7 +433,7 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
         if (conn == null) return;
         String sql;
         if (ids.size() == 1) {
-            sql = "DELETE FROM users_inventory WHERE id = ?";
+            sql = "DELETE FROM " + get_user().getYour_inventory() + " WHERE id = ?";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 // Set each parameter
                 ps.setString(1, ids.getFirst());
@@ -440,7 +453,7 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
         } else {
             // Create a string with comma-separated question marks for the prepared statement
             String placeholders = String.join(",", Collections.nCopies(ids.size(), "?"));
-            sql = "DELETE FROM users_inventory WHERE id IN (" + placeholders + ")";
+            sql = "DELETE FROM " + get_user().getYour_inventory() + " WHERE id IN (" + placeholders + ")";
 
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 // Set each parameter
@@ -461,7 +474,6 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, "Delete failed: " + e.getMessage());
             }
         }
-
     }
 
     private void clearStock() {
@@ -479,7 +491,7 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
             return;
         }
         // simple search across a few columns
-        String sql = "SELECT * FROM users_inventory WHERE id LIKE ? OR name LIKE ? OR price LIKE ? OR amount LIKE ?";
+        String sql = "SELECT * FROM " + get_user().getYour_inventory() + " WHERE id LIKE ? OR name LIKE ? OR price LIKE ? OR amount LIKE ?";
         try {
             conn = new DB().getConnection();
         } catch (SQLException e) {
@@ -510,8 +522,31 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
         else if ("Quantity".equals(key)) {
             col = "amount";
         }
-        loadTableData_SQL("SELECT * FROM users_inventory ORDER BY " + col);
+        loadTableData_SQL("SELECT * FROM " + get_user().getYour_inventory() + " ORDER BY " + col);
     }
 
+    private void import_goods(Connection conn) {
 
+        if (conn == null) return;
+
+        String sql = "INSERT INTO " + get_user().getYour_stock_add() + " (id, name, date, price, amount) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, StockIDField.getText().trim());
+            ps.setString(2, StockNameField.getText().trim());
+            ps.setString(3, new TimeManager().TimeNowFormat("yyyy-MM-dd"));
+            ps.setString(4, StockPriceField.getText().trim());
+            ps.setString(5, StockAmountField.getText().trim());
+            ps.executeUpdate();
+            OnReadyUpdate();
+            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Added to report successful");
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Added to report failed: " + ex.getMessage());
+        }
+
+
+    }
+
+    private void export_goods() {
+    }
 }

@@ -1,5 +1,7 @@
 package minhcreator.functional;
-import com.formdev.flatlaf.extras.*;
+
+import com.formdev.flatlaf.extras.FlatSVGIcon;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -8,7 +10,7 @@ public class imgRender {
     public ImageIcon renderImg(String path, int width, int height) {
         ImageIcon originalIcon = new ImageIcon(getClass().getResource(path));
         Image GetImg = originalIcon.getImage();
-        Image Create_Scaled_img = GetImg.getScaledInstance(width, height, Image.SCALE_DEFAULT);
+        Image Create_Scaled_img = GetImg.getScaledInstance(width, height, Image.SCALE_SMOOTH);
 
         // return scaled image
         return new ImageIcon(Create_Scaled_img);
@@ -19,4 +21,3 @@ public class imgRender {
         return new FlatSVGIcon(path, scale);
     }
 }
-

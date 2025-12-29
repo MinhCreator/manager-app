@@ -182,6 +182,7 @@ public class Sign_up extends JPanel {
             Notifications.getInstance().show(Notifications.Type.SUCCESS, "Register successfully! and you will be redirected to login page");
             session = new sessionManager();
             session.register(username, email, new String(txtPassword.getPassword()));
+            init_table(session.getYour_inventory(), session.getYour_export_table(), session.getYour_stock_add(), session.getYour_credit());
 
         } else {
             Notifications.getInstance().show(Notifications.Type.ERROR, "Something went wrong. Try again!");
@@ -230,7 +231,6 @@ public class Sign_up extends JPanel {
         String password = new String(txtPassword.getPassword());
         System.out.println(username + " " + email + " " + password);
 
-
         String sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
         try (Connection conn = new DB().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             if (conn == null) return;
@@ -239,12 +239,9 @@ public class Sign_up extends JPanel {
             ps.setString(3, password);
             ps.executeUpdate();
             Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Sign up successful");
-
-
         } catch (Exception e) {
             // TODO: handle exception
         }
-
     }
 
     public String getUserName() {
@@ -270,6 +267,19 @@ public class Sign_up extends JPanel {
             // TODO: handle exception
             return null;
         }
+
+    }
+
+    public void init_table(String inven, String exports, String stockAdd, String credit) {
+        String inventory = "CREATE TABLE IF NOT EXISTS " + inven + " (id VARCHAR(255) NOT NULL, name VARCHAR(255), price DOUBLE, amount INT, CONSTRAINT pk_table_1_id PRIMARY KEY (id));";
+        String export = "CREATE TABLE IF NOT EXISTS " + exports + " (id VARCHAR(255) NOT NULL, name VARCHAR(255), date DATE, price DOUBLE, amount INT, PRIMARY KEY (id));";
+        String importStock = "CREATE TABLE IF NOT EXISTS " + stockAdd + " (id VARCHAR(255) NOT NULL, name VARCHAR(255), date DATE, price DOUBLE, amount INT, PRIMARY KEY (id));";
+        String creditTb = "CREATE TABLE IF NOT EXISTS " + credit + " (owner_ID INT NOT NULL, Owner_name VARCHAR(255), Current_credit DOUBLE, CONSTRAINT pk_table_1_id PRIMARY KEY (owner_ID));";
+        DB database = new DB();
+        database.executionSQL(inventory);
+        database.executionSQL(export);
+        database.executionSQL(importStock);
+        database.executionSQL(creditTb);
 
     }
 }

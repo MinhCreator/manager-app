@@ -40,7 +40,6 @@ public class Login extends JPanel {
         Lpanel.setPreferredSize(new Dimension(800, 700));
 
         ImageIcon icons = new imgRender().renderImg("/minhcreator/assets/warehouse_management.png", 800, 700);
-
         JLabel Bg_label = new JLabel();
         Bg_label.setIcon(icons);
         Bg_label.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -120,7 +119,7 @@ public class Login extends JPanel {
 
         panel.add(lbtitle);
         panel.add(desc);
-        panel.add(new JLabel("Username"), "gapy 8");
+        panel.add(new JLabel("Email"), "gapy 8");
         panel.add(txtUsername);
         panel.add(new JLabel("Password"), "gapy 8");
         panel.add(txtPassword);
@@ -299,9 +298,9 @@ public class Login extends JPanel {
         if (!getInputBox.isEmpty() && !getPass.isEmpty()) {
 
             if (isAgree) {
-                if (match.equals("email")) {
+                if (match.equals("email") && does_Email_Exist(getInputBox)) {
                     attemp_Email_Login();
-                    Notifications.getInstance().show(Notifications.Type.SUCCESS, Notifications.Location.TOP_CENTER, sucMess);
+//
                 } else {
                     Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, "Login failed");
                 }
@@ -386,10 +385,16 @@ public class Login extends JPanel {
                         Notifications.getInstance().show(
                                 Notifications.Type.ERROR,
                                 Notifications.Location.TOP_CENTER,
-                                "Invalid username or password"
+                                "Invalid username or password and May be your account not existed"
                         );
                     }
                 }
+            } catch (Exception e) {
+                Notifications.getInstance().show(
+                        Notifications.Type.ERROR,
+                        Notifications.Location.TOP_CENTER,
+                        "Invalid username or password and May be your account not existed"
+                );
             }
 
         } catch (SQLException e) {
@@ -415,11 +420,14 @@ public class Login extends JPanel {
 
                     if (count > 0) {
                         return true; // Username exists
+                    } else {
+                        Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, " Your email entered not exists!");
                     }
                 }
             }
         } catch (SQLException ex) {
             System.err.println("Database Error during username check: " + ex.getMessage());
+            Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, ex.getMessage());
 
         }
         return false; // Username is Unavailable in table
@@ -485,7 +493,7 @@ public class Login extends JPanel {
     }
 
 
-    private static Login login;
+    public static Login login;
     public JTextField txtUsername;
     public JPasswordField txtPassword;
     private JCheckBox UserAgreement;
