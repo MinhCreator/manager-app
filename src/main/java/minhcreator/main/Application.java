@@ -5,10 +5,10 @@ import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.extras.FlatAnimatedLafChange;
 import com.formdev.flatlaf.fonts.jetbrains_mono.FlatJetBrainsMonoFont;
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
-import minhcreator.component.form.Login;
 import minhcreator.component.form.MainForm;
-import minhcreator.component.form.Sign_up;
-import minhcreator.functional.FontManager;
+import minhcreator.component.page.Login;
+import minhcreator.component.page.Sign_up;
+import minhcreator.functional.fontRender.FontManager;
 import minhcreator.util.global;
 import raven.toast.Notifications;
 
@@ -16,6 +16,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Dictionary;
 
+/**
+ *
+ * @author Raven
+ * @author Modified and added new feature by MinhCreatorVN
+ */
 public class Application extends JFrame {
     private static Application app;
     private final MainForm mainForm;

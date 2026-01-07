@@ -1,13 +1,18 @@
 package minhcreator.debugPage;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import minhcreator.UIManager.UIManager;
-import minhcreator.component.form.Sign_up;
+import minhcreator.component.UIManager.UIManager;
+import minhcreator.component.page.Sign_up;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ *
+ * @author Raven
+ * @author Modified by MinhCreatorVN
+ */
 public class LoginBackup extends JPanel {
     public LoginBackup() {
         init();

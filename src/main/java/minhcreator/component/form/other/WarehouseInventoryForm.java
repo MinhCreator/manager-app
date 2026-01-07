@@ -4,10 +4,11 @@ package minhcreator.component.form.other;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import minhcreator.component.stock.StockStatus;
 import minhcreator.component.stock.TableBadgeCellRenderer;
-import minhcreator.functional.TimeManager;
 import minhcreator.functional.database.DB;
+import minhcreator.functional.location.TimeManager;
 import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
+import minhcreator.service.WarehouseService;
 import minhcreator.util.Shared;
 import net.miginfocom.swing.MigLayout;
 import raven.toast.Notifications;
@@ -21,14 +22,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Vector;
 
-import static minhcreator.component.form.Login.login;
+import static minhcreator.component.page.Login.login;
 
+/**
+ * @author MinhCreatorVN
+ */
 public class WarehouseInventoryForm extends javax.swing.JPanel {
     private static JTable table = new JTable();
     private JPanel Rightpanel, controlPanel, searchPanel, sortPanel, bottomPanel, StockPanel;
-    private JLabel lblSearch, lblSort, StockID, StockName, StockPrice, StockAmount;
+    private JLabel lblSearch, lblSort, StockID, StockName, StockPrice, StockAmount, StockSellPrice, StockCategory;
     private JButton searchButton, sortButton, Add_But, deleteButton, clearButton, refreshButton, editButton, ExportButt, addButton_add_stock_dialog, CancelBut_add_stock_dialog;
-    private JTextField searchField, StockIDField, StockNameField, StockPriceField, StockAmountField;
+    private JTextField searchField, StockIDField, StockNameField, StockPriceField, StockAmountField, StockSellPriceField, StockCategoryField;
     private JComboBox<String> sortByBox;
     public static Vector<Vector<Object>> export_data = new Vector<>();
     private final Shared shared = new Shared();
@@ -100,7 +104,7 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
         sortPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 4));
         lblSort = new JLabel("Sort by");
         // option for sort
-        sortByBox = new JComboBox<>(new String[]{"ID", "Name stock", "Price", "Quantity"});
+        sortByBox = new JComboBox<>(new String[]{"ID", "Name stock", "Category", "Price", "Quantity"});
         sortButton = new JButton("Sort");
         sortByBox.addActionListener(e -> letSort());
 
@@ -117,22 +121,17 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
     public JComponent add_Function_Panel() {
         // bottom functional panel
         Add_But = new JButton("Add");
-        Add_But.addActionListener(e -> {
-            addStock();
-        });
+        Add_But.addActionListener(e -> addStock());
         deleteButton = new JButton("Delete");
-        deleteButton.addActionListener(e -> {
-            deleteStock();
-        });
+        deleteButton.addActionListener(e -> deleteStock());
         clearButton = new JButton("Clear");
-        clearButton.addActionListener(e -> {
-            clearStock();
-        });
+        clearButton.addActionListener(e -> clearStock());
         refreshButton = new JButton("Refresh");
         refreshButton.addActionListener(e -> OnReadyUpdate());
         editButton = new JButton("Edit");
         editButton.addActionListener(e -> editStock());
-        ExportButt = new JButton("Export");
+        ExportButt = new JButton("Sell");
+        ExportButt.addActionListener(e -> SellStock());
 
         bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 4));
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
@@ -148,7 +147,7 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
     public static sessionManager get_user() {
         sessionManager get = login.getInstance().session;
         System.out.println();
-        return login.getInstance().session;
+        return get;
     }
 
     private static void loadTableData_SQL(String sql) {
@@ -183,7 +182,7 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
     }
 
     public static DefaultTableModel modelBuilding(Vector<Vector<Object>> data) throws SQLException {
-        Object[] col = {"", "ID", "Name", "Price", "Amount", "Status"};
+        Object[] col = {"", "ID", "Name", "Category", "Price", "Sell price ", "Amount", "Status"};
         Vector<Object> columns = new Vector<>();
 
         columns.addAll(Arrays.asList(col));
@@ -193,8 +192,8 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
         if (!data.isEmpty()) {
             for (int row_data = 0; row_data < data.size(); row_data++) {
 //            System.out.println(data.get(row_data));
-                data.get(row_data).add(0, Boolean.FALSE);
-                data.get(row_data).add(StockStatus.getStatusBage((int) data.get(row_data).get(4), 10));
+                data.get(row_data).addFirst(Boolean.FALSE);
+                data.get(row_data).add(StockStatus.getStatusBage((int) data.get(row_data).get(6), 10));
                 model.add(data.get(row_data));
             }
 //        System.out.println(model);
@@ -202,17 +201,17 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
             return new DefaultTableModel(model, columns) {
                 @Override
                 public boolean isCellEditable(int row, int column) {
-                    // Make the four column (index 4, "Status") not editable
-                    if (column == 4) {
-                        return false;
+                    // Make the column 0 can editable
+                    if (column == 0) {
+                        return true;
                     }
-                    // Allow editing for all other columns
-                    return true;
+                    // Not Allowed editing for all other columns
+                    return false;
                 }
 
                 @Override
                 public Class<?> getColumnClass(int columnIndex) {
-                    if (columnIndex == 5) {
+                    if (columnIndex == 7) {
                         return StockStatus.class;
                     }
                     if (columnIndex == 0) {
@@ -251,7 +250,7 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
 
     private void addStock() {
         javax.swing.JFrame dialog = new javax.swing.JFrame();
-        dialog.setSize(500, 350);
+        dialog.setSize(450, 500);
         dialog.setLocationRelativeTo(Application.getInstance());
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         dialog.setVisible(true);
@@ -270,8 +269,14 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
         StockName = new JLabel("Stock name");
         StockNameField = new JTextField();
 
+        StockCategory = new JLabel("Category");
+        StockCategoryField = new JTextField();
+
         StockPrice = new JLabel("Stock price");
         StockPriceField = new JTextField();
+
+        StockSellPrice = new JLabel("Stock sell price");
+        StockSellPriceField = new JTextField();
 
         StockAmount = new JLabel("Stock amount");
         StockAmountField = new JTextField();
@@ -288,13 +293,15 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
             }
             if (conn == null) return;
             // insert to user inventory
-            String sql = "INSERT INTO " + get_user().getYour_inventory() + " (id, name, price, amount) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO " + get_user().getYour_inventory() + " (id, name, category, price, sellprice, amount) VALUES (?, ?, ?, ?, ?, ?)";
             import_goods(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, StockIDField.getText().trim());
                 ps.setString(2, StockNameField.getText().trim());
-                ps.setString(3, StockPriceField.getText().trim());
-                ps.setString(4, StockAmountField.getText().trim());
+                ps.setString(3, StockCategoryField.getText().trim());
+                ps.setString(4, StockPriceField.getText().trim());
+                ps.setString(5, StockSellPriceField.getText().trim());
+                ps.setString(6, StockAmountField.getText().trim());
                 ps.executeUpdate();
                 dialog.dispose();
                 OnReadyUpdate();
@@ -308,8 +315,12 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
         StockPanel.add(StockIDField);
         StockPanel.add(StockName);
         StockPanel.add(StockNameField);
+        StockPanel.add(StockCategory);
+        StockPanel.add(StockCategoryField);
         StockPanel.add(StockPrice);
         StockPanel.add(StockPriceField);
+        StockPanel.add(StockSellPrice);
+        StockPanel.add(StockSellPriceField);
         StockPanel.add(StockAmount);
         StockPanel.add(StockAmountField);
         StockPanel.add(addButton_add_stock_dialog, "split 2");
@@ -319,7 +330,7 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
 
     private void editStock() {
         javax.swing.JFrame dialog = new javax.swing.JFrame();
-        dialog.setSize(450, 400);
+        dialog.setSize(450, 500);
         dialog.setLocationRelativeTo(Application.getInstance());
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         dialog.setVisible(true);
@@ -348,14 +359,22 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
         StockNameField = new JTextField();
         StockNameField.setText(table.getValueAt(table.getSelectedRow(), 2).toString());
 
+        StockCategory = new JLabel("Category");
+        StockCategoryField = new JTextField();
+        StockCategoryField.setText(table.getValueAt(table.getSelectedRow(), 3).toString());
+
         StockPrice = new JLabel("Stock price");
         StockPriceField = new JTextField();
-        StockPriceField.setText(table.getValueAt(table.getSelectedRow(), 3).toString());
+        StockPriceField.setText(table.getValueAt(table.getSelectedRow(), 4).toString());
+
+        StockSellPrice = new JLabel("Stock sell price");
+        StockSellPriceField = new JTextField();
+        StockSellPriceField.setText(table.getValueAt(table.getSelectedRow(), 5).toString());
 
 
         StockAmount = new JLabel("Stock amount");
         StockAmountField = new JTextField();
-        StockAmountField.setText(table.getValueAt(table.getSelectedRow(), 4).toString());
+        StockAmountField.setText(table.getValueAt(table.getSelectedRow(), 6).toString());
 
         addButton_add_stock_dialog = new JButton("Confirm");
         CancelBut_add_stock_dialog = new JButton("Cancel");
@@ -368,15 +387,21 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
                 throw new RuntimeException(ex);
             }
             if (conn == null) return;
+            int addValue = 0;
+            String sql = "UPDATE " + get_user().getYour_inventory() + " SET name=?,category=?, price=?, sellprice=?, amount=? WHERE id=?";
 
-//            String sql = "UPDATE users_inventory SET name=?, price=?, amount=? WHERE id=?";
-            String sql = "UPDATE " + get_user().getYour_inventory() + " SET name=?, price=?, amount=? WHERE id=?";
+            addValue = Integer.parseInt(StockAmountField.getText().trim()) + currentStock(get_user().getId(), get_user().getYour_inventory());
+
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, StockNameField.getText().trim());
-                ps.setString(2, StockPriceField.getText().trim());
-                ps.setString(3, StockAmountField.getText().trim());
-                ps.setString(4, StockIDField.getText().trim());
+                ps.setString(2, StockCategoryField.getText().trim());
+                ps.setString(3, StockPriceField.getText().trim());
+                ps.setString(4, StockSellPriceField.getText().trim());
+//                ps.setString(4, StockAmountField.getText().trim());
+                ps.setInt(5, addValue);
+                ps.setString(6, StockIDField.getText().trim());
                 ps.executeUpdate();
+                update_import_goods(conn);
                 dialog.dispose();
                 OnReadyUpdate();
                 Notifications.getInstance().show(
@@ -391,12 +416,22 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
         });
         StockPanel.add(StockID);
         StockPanel.add(StockIDField);
+
         StockPanel.add(StockName);
         StockPanel.add(StockNameField);
+
+        StockPanel.add(StockCategory);
+        StockPanel.add(StockCategoryField);
+
         StockPanel.add(StockPrice);
         StockPanel.add(StockPriceField);
+
+        StockPanel.add(StockSellPrice);
+        StockPanel.add(StockSellPriceField);
+
         StockPanel.add(StockAmount);
         StockPanel.add(StockAmountField);
+
         StockPanel.add(addButton_add_stock_dialog, "split 2");
         StockPanel.add(CancelBut_add_stock_dialog);
         dialog.add(StockPanel);
@@ -491,7 +526,7 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
             return;
         }
         // simple search across a few columns
-        String sql = "SELECT * FROM " + get_user().getYour_inventory() + " WHERE id LIKE ? OR name LIKE ? OR price LIKE ? OR amount LIKE ?";
+        String sql = "SELECT * FROM " + get_user().getYour_inventory() + " WHERE id LIKE ? OR category LIKE ? OR name LIKE ? OR price LIKE ? OR sellprice LIKE ? OR amount LIKE ?";
         try {
             conn = new DB().getConnection();
         } catch (SQLException e) {
@@ -504,6 +539,8 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
             ps.setString(2, like);
             ps.setString(3, like);
             ps.setString(4, like);
+            ps.setString(5, like);
+            ps.setString(6, like);
             try (ResultSet rs = ps.executeQuery()) {
                 UpdateTableModel(rs);
             }
@@ -517,6 +554,7 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
         String key = (String) sortByBox.getSelectedItem();
         String col = "";
         if ("ID".equals(key)) col = "id";
+        else if ("Category".equals(key)) col = "category";
         else if ("Name stock".equals(key)) col = "name";
         else if ("Price".equals(key)) col = "price";
         else if ("Quantity".equals(key)) {
@@ -529,13 +567,14 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
 
         if (conn == null) return;
 
-        String sql = "INSERT INTO " + get_user().getYour_stock_add() + " (id, name, date, price, amount) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO " + get_user().getYour_stock_add() + " (id, name, category, date, price, amount) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, StockIDField.getText().trim());
             ps.setString(2, StockNameField.getText().trim());
-            ps.setString(3, new TimeManager().TimeNowFormat("yyyy-MM-dd"));
-            ps.setString(4, StockPriceField.getText().trim());
-            ps.setString(5, StockAmountField.getText().trim());
+            ps.setString(3, StockCategoryField.getText().trim());
+            ps.setString(4, new TimeManager().TimeNowFormat("yyyy-MM-dd"));
+            ps.setString(5, StockPriceField.getText().trim());
+            ps.setString(6, StockAmountField.getText().trim());
             ps.executeUpdate();
             OnReadyUpdate();
             Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Added to report successful");
@@ -547,6 +586,180 @@ public class WarehouseInventoryForm extends javax.swing.JPanel {
 
     }
 
-    private void export_goods() {
+    private void update_import_goods(Connection conn) {
+
+        if (conn == null) return;
+
+        String sql = "UPDATE " + get_user().getYour_stock_add() + " SET name=?, category=?, date=?, price=?, amount=? WHERE id=?";
+        int currSaleStock = currentStock(get_user().getId(), get_user().getYour_export_table());
+        int updateSale = Integer.parseInt(StockAmountField.getText().trim());
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, StockNameField.getText().trim());
+            ps.setString(2, StockCategoryField.getText().trim());
+            ps.setString(3, new TimeManager().TimeNowFormat("yyyy-MM-dd"));
+            ps.setString(4, StockPriceField.getText().trim());
+            ps.setInt(5, currSaleStock + updateSale);
+            ps.setString(6, StockIDField.getText().trim());
+            ps.executeUpdate();
+            OnReadyUpdate();
+            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Edited to report successful");
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Edited to report failed: " + ex.getMessage());
+        }
+
+
+    }
+
+    private void SellStock() {
+        javax.swing.JFrame dialog = new javax.swing.JFrame();
+        dialog.setSize(450, 500);
+        dialog.setLocationRelativeTo(Application.getInstance());
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setVisible(true);
+        // add component
+        StockPanel = new JPanel();
+        StockPanel.setLayout(
+                new MigLayout(
+                        "wrap, fillx, insets 35 45 30 45",
+                        "[fill,360]"
+                )
+        );
+        int viewRow = table.getSelectedRow();
+        if (viewRow == -1) {
+            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Select a stock to sales.");
+            dialog.dispose();
+            return;
+        }
+
+        StockID = new JLabel("Stock ID");
+        StockIDField = new JTextField();
+        StockIDField.setText(table.getValueAt(table.getSelectedRow(), 1).toString());
+        StockIDField.setEditable(false);
+        StockIDField.setFocusable(false);
+
+        StockName = new JLabel("Stock name");
+        StockNameField = new JTextField();
+        StockNameField.setText(table.getValueAt(table.getSelectedRow(), 2).toString());
+        StockNameField.setEditable(false);
+        StockNameField.setFocusable(false);
+
+        StockCategory = new JLabel("Category");
+        StockCategoryField = new JTextField();
+        StockCategoryField.setText(table.getValueAt(table.getSelectedRow(), 3).toString());
+        StockCategoryField.setEditable(false);
+        StockCategoryField.setFocusable(false);
+
+        StockPrice = new JLabel("Stock price");
+        StockPriceField = new JTextField();
+        StockPriceField.setText(table.getValueAt(table.getSelectedRow(), 4).toString());
+        StockPriceField.setEditable(false);
+        StockPriceField.setFocusable(false);
+
+        StockSellPrice = new JLabel("Stock sell price");
+        StockSellPriceField = new JTextField();
+        StockSellPriceField.setText(table.getValueAt(table.getSelectedRow(), 5).toString());
+        StockSellPriceField.setEditable(false);
+        StockSellPriceField.setFocusable(false);
+
+        StockAmount = new JLabel("Stock amount");
+        StockAmountField = new JTextField();
+
+        addButton_add_stock_dialog = new JButton("Confirm");
+        CancelBut_add_stock_dialog = new JButton("Cancel");
+
+        CancelBut_add_stock_dialog.addActionListener(e -> dialog.dispose());
+        addButton_add_stock_dialog.addActionListener(e -> {
+            WarehouseService WS = new WarehouseService();
+            int CurrentAmount = (int) table.getValueAt(table.getSelectedRow(), 6);
+            int saleAmount = Integer.parseInt(StockAmountField.getText().trim());
+            String id = StockIDField.getText().trim();
+            try {
+                double price = Double.parseDouble(StockPriceField.getText().trim());
+                double sellPrice = Double.parseDouble(StockSellPriceField.getText().trim());
+                if (saleAmount <= CurrentAmount) {
+                    WS.updateQuantityService(get_user().getYour_inventory(), id, CurrentAmount - saleAmount);
+
+                    WS.insertSaleTable(get_user().getYour_export_table(),
+                            id,
+                            StockNameField.getText().trim(),
+                            StockCategoryField.getText().trim(),
+                            price, sellPrice, saleAmount
+                    );
+                    Notifications.getInstance().show(Notifications.Type.SUCCESS, Notifications.Location.TOP_CENTER, "Sold successfully");
+                    WarehouseInventoryForm.OnReadyUpdate();
+
+                } else {
+                    Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, "The quantity of stock(s) to be sold exceeds the current quantity.");
+                }
+            } catch (NumberFormatException ex) {
+                Notifications.getInstance().show(
+                        Notifications.Type.ERROR,
+                        Notifications.Location.TOP_CENTER,
+                        "Please enter valid numbers for price and sell price"
+                );
+            }
+            dialog.dispose();
+        });
+        StockPanel.add(StockID);
+        StockPanel.add(StockIDField);
+
+        StockPanel.add(StockName);
+        StockPanel.add(StockNameField);
+
+        StockPanel.add(StockCategory);
+        StockPanel.add(StockCategoryField);
+
+        StockPanel.add(StockPrice);
+        StockPanel.add(StockPriceField);
+
+        StockPanel.add(StockSellPrice);
+        StockPanel.add(StockSellPriceField);
+
+        StockPanel.add(StockAmount);
+        StockPanel.add(StockAmountField);
+
+        StockPanel.add(addButton_add_stock_dialog, "split 2");
+        StockPanel.add(CancelBut_add_stock_dialog);
+        dialog.add(StockPanel);
+    }
+
+    private boolean checkAmount(String AmountField, String id) {
+        String sql = "select amount from " + get_user().getYour_inventory() + " where id= ?";
+        try {
+            conn = DB.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                int out = rs.getInt("amount");
+                if (Integer.parseInt(AmountField) >= out || Integer.parseInt(AmountField) <= out) {
+                    return true;
+                } else return false;
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+        return false;
+    }
+
+    private int currentStock(String id, String table) {
+        String sql = "select amount from " + table + " where id= ?";
+        try {
+            conn = DB.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("amount");
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return 0;
+        }
+        return 0;
     }
 }

@@ -1,9 +1,13 @@
 package minhcreator.util;
 
-import minhcreator.component.form.Login;
-import minhcreator.component.form.Sign_up;
+import minhcreator.component.page.Login;
+import minhcreator.component.page.Sign_up;
 import minhcreator.functional.database.DB;
 
+/**
+ *
+ * @author MinhCreatorVN
+ */
 public class Shared {
     // variables test
     public static final String casting_value = "CASTING";

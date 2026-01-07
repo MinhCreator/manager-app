@@ -1,10 +1,14 @@
-package minhcreator.functional;
+package minhcreator.functional.imageSupport;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ *
+ * @author MinhCreatorVN
+ */
 public class imgRender {
 
     public ImageIcon renderImg(String path, int width, int height) {

@@ -1,4 +1,4 @@
-package minhcreator.component.form;
+package minhcreator.component.page;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import minhcreator.functional.database.DB;
@@ -11,7 +11,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
 
-
+/**
+ *
+ * @author MinhCreatorVN
+ */
 public class settings extends JPanel {
     private JPanel settingPanel;
     private JButton log_OutButt, UpdateBut, delMyAcc;
@@ -59,16 +62,20 @@ public class settings extends JPanel {
         log_OutButt.addActionListener(e -> {
             letLogOut();
             session_Login.clearSession();
+            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "You have logged out");
         });
         UpdateBut = new JButton("Update");
         UpdateBut.addActionListener(e -> {
             letUpdate();
+            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Your account has been updated");
+
         });
         delMyAcc = new JButton("Delete me");
         delMyAcc.addActionListener(e -> {
             deleteMyAccount();
             session_Login.clearSession();
             letLogOut();
+            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Your account has been deleted successfully");
         });
         settingPanel.add(Email_Lb);
         settingPanel.add(Email_Tf);
@@ -141,7 +148,7 @@ public class settings extends JPanel {
                 stmt.execute("DROP TABLE " + session_Login.getYour_inventory() + ";");
                 stmt.execute("DROP TABLE " + session_Login.getYour_stock_add() + ";");
                 stmt.execute("DROP TABLE " + session_Login.getYour_export_table() + ";");
-                stmt.execute("DROP TABLE " + session_Login.getYour_credit() + ";");
+//                stmt.execute("DROP TABLE " + session_Login.getYour_credit() + ";");
                 Notifications.getInstance().show(
                         Notifications.Type.INFO,
                         Notifications.Location.TOP_CENTER,

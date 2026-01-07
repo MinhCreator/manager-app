@@ -5,6 +5,10 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Properties;
 
+/**
+ *
+ * @author MinhCreatorVN
+ */
 public class global {
     /**
      * @param PathContentDir  : Path Dir of assets or resources

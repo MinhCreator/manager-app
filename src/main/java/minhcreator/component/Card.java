@@ -5,7 +5,11 @@ import minhcreator.component.model.ModelCard;
 import java.awt.*;
 import java.text.DecimalFormat;
 
-
+/**
+ *
+ * @author Raven
+ * @author Modified by MinhCreatorVN
+ */
 public class Card extends javax.swing.JPanel {
 
 
@@ -35,6 +39,11 @@ public class Card extends javax.swing.JPanel {
         lbTitle.setText(data.getTitle());
         lbValues.setText(df.format(data.getValues()));
         lbIcon.setIcon(data.getIcon());
+    }
+
+    public void setDataNoIcon(ModelCard data) {
+        lbTitle.setText(data.getTitle());
+        lbValues.setText(data.getUserName());
     }
 
     public void setDataSvg(ModelCard data) {

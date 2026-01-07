@@ -5,7 +5,12 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
 
-public class GUI extends JFrame{
+/**
+ *
+ * @author KS. Hoang Vu Da Quynh
+ * @author Modified by MinhCreatorVN
+ */
+public class GUI extends JFrame {
     private final JTextField studentIdField, firstNameField, lastNameField, majorField, phoneField, gpaField, dobField;
     private final JButton saveButton, clearButton, refreshButton, editButton, deleteButton, cancelButton, searchButton, sortButton;
     private final JTextField searchField;
@@ -165,6 +170,7 @@ public class GUI extends JFrame{
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
     }
+
     private void addFormRow(JPanel panel, GridBagConstraints gbc, JComponent label, JComponent field) {
         gbc.gridx = 0;
         panel.add(label, gbc);

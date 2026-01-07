@@ -1,9 +1,14 @@
-package minhcreator.functional;
+package minhcreator.functional.location;
 
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ *
+ * @author MinhCreatorVN
+ * @version 1.0 PreAlpha
+ */
 public class TimeManager {
     private static TimeManager instance;
 

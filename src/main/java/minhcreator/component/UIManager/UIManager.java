@@ -1,4 +1,4 @@
-package minhcreator.UIManager;
+package minhcreator.component.UIManager;
 
 import com.formdev.flatlaf.extras.FlatAnimatedLafChange;
 import minhcreator.main.Application;

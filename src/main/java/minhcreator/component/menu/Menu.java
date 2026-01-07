@@ -27,7 +27,7 @@ public class Menu extends JPanel {
 //        {"Inventory", "Inbox", "Read", "Compost"},
             {"Inventory"},
             {"Analytics"},
-            {"Stock report"},
+            {"Report"},
             {"Settings"},
 //        {"~COMPONENT~"},
 //        {"Advanced UI", "Cropper", "Owl Carousel", "Sweet Alert"},

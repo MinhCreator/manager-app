@@ -1,4 +1,13 @@
 package minhcreator.component.form.other;
 
-public class AnalyticsForm extends javax.swing.JPanel{
+import minhcreator.component.ModularPanel.AnalyticsPanel;
+
+/**
+ *
+ * @author MinhCreatorVN
+ */
+public class AnalyticsForm extends SimpleForm {
+    public AnalyticsForm() {
+        add(new AnalyticsPanel());
+    }
 }

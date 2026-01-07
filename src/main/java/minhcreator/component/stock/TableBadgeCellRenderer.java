@@ -12,6 +12,7 @@ import java.awt.*;
 /**
  *
  * @author Raven
+ * @author Modified by MinhCreatorVN
  */
 public class TableBadgeCellRenderer extends JLabel implements TableCellRenderer {
 

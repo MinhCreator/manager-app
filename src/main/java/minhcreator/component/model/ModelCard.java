@@ -4,6 +4,11 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 import javax.swing.*;
 
+/**
+ *
+ * @author Raven
+ * @author Modified by MinhCreatorVN
+ */
 public class ModelCard {
 
     public FlatSVGIcon getSvg() {
@@ -13,7 +18,6 @@ public class ModelCard {
     public void setSvg(FlatSVGIcon svg) {
         this.svg = svg;
     }
-
 
     public String getTitle() {
         return title;
@@ -39,6 +43,14 @@ public class ModelCard {
         this.icon = icon;
     }
 
+    public String getUserName() {
+        return UserName;
+    }
+
+    public void setUserName(String userName) {
+        UserName = userName;
+    }
+
     public ModelCard(String title, double values, Icon icon) {
         this.title = title;
         this.values = values;
@@ -51,6 +63,11 @@ public class ModelCard {
         this.svg = icon;
     }
 
+    public ModelCard(String title, String userName) {
+        this.title = title;
+        this.UserName = userName;
+    }
+
     public ModelCard() {
     }
 
@@ -58,4 +75,5 @@ public class ModelCard {
     private double values;
     private FlatSVGIcon svg;
     private Icon icon;
+    private String UserName;
 }

@@ -1,18 +1,23 @@
-package minhcreator.functional;
+package minhcreator.functional.fontRender;
 
 import raven.toast.Notifications;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ *
+ * @author MinhCreatorVN
+ */
 public class FontManager extends Component {
 
     public static void LoadFont(String FontSetting, String FlatLaf_Font, int style, int size) {
         Component put = (Component) UIManager.put(
                 FontSetting,
-                new Font(FlatLaf_Font,style, size)
-                );
+                new Font(FlatLaf_Font, style, size)
+        );
 //        return put;
     }
 

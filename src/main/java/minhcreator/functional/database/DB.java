@@ -4,6 +4,10 @@ import raven.toast.Notifications;
 
 import java.sql.*;
 
+/**
+ *
+ * @author MinhCreatorVN
+ */
 public class DB {
     public static Connection conn = null;
     public Statement stmt;

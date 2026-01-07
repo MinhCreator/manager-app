@@ -9,6 +9,9 @@ import minhcreator.component.form.other.ReportForm;
 import minhcreator.component.form.other.WarehouseInventoryForm;
 import minhcreator.component.menu.Menu;
 import minhcreator.component.menu.MenuAction;
+import minhcreator.component.page.Login;
+import minhcreator.component.page.settings;
+import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
 
 import javax.swing.*;
@@ -16,9 +19,10 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
+
 /**
  *
- * @author Raven
+ * @author MinhCreatorVN
  */
 public class MainForm extends JLayeredPane {
 
@@ -84,7 +88,18 @@ public class MainForm extends JLayeredPane {
 //            }
             // My custom logic menu
             if (index == 0) {
-                Application.showForm(new FormDashboard());
+//                sessionManager currentSession = Login.session;
+                sessionManager currentSession = Login.getInstance().getSession();
+//                if (currentSession != null) {
+                Application.showForm(new FormDashboard(currentSession));
+//                } else {
+//                    // Handle the case where there's no active session
+//                    JOptionPane.showMessageDialog(Application.getInstance(),
+//                            "Please re-login",
+//                            "Session Expired",
+//                            JOptionPane.WARNING_MESSAGE);
+//                    Application.logout(); // Or redirect to login
+//                }
             } else if (index == 1) {
                 Application.showForm(new WarehouseInventoryForm());
             } else if (index == 2) {
@@ -129,7 +144,6 @@ public class MainForm extends JLayeredPane {
     private Menu menu;
     private JPanel panelBody;
     private JButton menuButton;
-
 
     private class MainFormLayout implements LayoutManager {
 

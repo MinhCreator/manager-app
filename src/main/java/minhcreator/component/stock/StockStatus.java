@@ -5,6 +5,11 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ *
+ * @author Raven
+ * @author Modified by MinhCreatorVN
+ */
 public enum StockStatus implements TableBadgeCellRenderer.Info {
     AVAIlABLE("Available ", new Color(59, 155, 60), "stock.svg"),
     OUT("Out stock ", new Color(255, 69, 0), "cross.svg"),

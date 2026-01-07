@@ -15,6 +15,7 @@ import java.awt.*;
 /**
  *
  * @author Raven
+ * @author Modified by MinhCreatorVN
  */
 public class PasswordStrengthStatus extends JPanel {
     private JPasswordField passwordField;

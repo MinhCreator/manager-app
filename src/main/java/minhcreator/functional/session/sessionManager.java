@@ -16,65 +16,42 @@ public class sessionManager {
     /**
      * Username of current user.
      */
-    private String username;
+    private String username = "";
 
     /**
      * Email of current user.
      */
-    private String email;
+    private String email = "";
 
     /**
      * Password of current user.
      */
-    private String password;
+    private String password = "";
 
     /**
      * ID of current user.
      */
-    private String id;
+    private String id = "";
 
     /**
      * Name of inventory table of current user.
      */
-    private String your_inventory;
+    private String your_inventory = "";
 
     /**
      * Name of export table of current user.
      */
-    private String your_export_table;
+    private String your_export_table = "";
 
     /**
      * Name of stock add table of current user.
      */
-    private String your_stock_add;
-
-    /**
-     * Name of credit table of current user.
-     */
-    private String your_credit;
+    private String your_stock_add = "";
 
     /**
      * Constructor of sessionManager.
      */
     public sessionManager() {
-    }
-
-    /**
-     * Getter of your_credit.
-     *
-     * @return your_credit of current user.
-     */
-    public String getYour_credit() {
-        return your_credit;
-    }
-
-    /**
-     * Setter of your_credit.
-     *
-     * @param your_credit new your_credit of current user.
-     */
-    public void setYour_credit(String your_credit) {
-        this.your_credit = your_credit;
     }
 
     /**
@@ -121,7 +98,6 @@ public class sessionManager {
         this.your_inventory = this.username + "_inventory";
         this.your_export_table = this.username + "_export_table";
         this.your_stock_add = this.username + "_stock_add";
-        this.your_credit = this.username + "_credit";
         System.out.println("Session has stored " + username + " " + email + " " + password);
         System.out.println("table is " + username + " inventory " + your_inventory + " export table " + your_export_table);
     }
@@ -142,7 +118,6 @@ public class sessionManager {
         this.your_inventory = this.username + "_inventory";
         this.your_export_table = this.username + "_export_table";
         this.your_stock_add = this.username + "_stock_add";
-        this.your_credit = this.username + "_credit";
         System.out.println("Session has stored " + username + " " + email + " " + password);
         System.out.println("table is " + username + " inventory " + your_inventory + " export table " + your_export_table);
     }
@@ -161,7 +136,6 @@ public class sessionManager {
         this.your_inventory = this.username + "_inventory";
         this.your_export_table = this.username + "_export_table";
         this.your_stock_add = this.username + "_stock_add";
-        this.your_credit = this.username + "_credit";
         System.out.println("Session has stored " + username + " " + email + " " + password);
         System.out.println("table is " + username + " inventory " + your_inventory + " export table " + your_export_table);
     }
@@ -226,7 +200,7 @@ public class sessionManager {
      * @return username of current user.
      */
     public String getUsername() {
-        return username;
+        return username != null ? username : "";
     }
 
     /**
