@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
+ * FontManager class is used to load custom fonts and set them as the default font for the application.
  *
  * @author MinhCreatorVN
  */

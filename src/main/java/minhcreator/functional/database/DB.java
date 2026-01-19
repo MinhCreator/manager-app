@@ -5,17 +5,36 @@ import raven.toast.Notifications;
 import java.sql.*;
 
 /**
+ * DB class is used to connect to the database and perform database operations.
  *
  * @author MinhCreatorVN
  */
 public class DB {
     public static Connection conn = null;
+    private static DB instance;
     public Statement stmt;
     public PreparedStatement pstmt;
     private static final String DB_URL = "jdbc:mysql://localhost/warehouse";
     private static final String USER = "root";
     private static final String PASSWORD = "";
 
+    /**
+     * Returns the singleton instance of the DB class.
+     *
+     * @return the singleton instance of the DB class
+     */
+    public static synchronized DB getInstance() {
+        if (instance == null) {
+            instance = new DB();
+        }
+        return instance;
+    }
+
+    /**
+     * Initializes the database connection.
+     *
+     * @throws SQLException if the connection fails
+     */
     private synchronized static void initializeConnection() throws SQLException {
         if (conn == null || conn.isClosed()) {
             conn = DriverManager.getConnection(DB_URL, USER, PASSWORD);
@@ -25,6 +44,12 @@ public class DB {
         }
     }
 
+    /**
+     * Returns a connection to the database. If the connection is already open or null, it initializes a new connection.
+     *
+     * @return a connection to the database
+     * @throws SQLException if the connection fails
+     */
     public synchronized static Connection getConnection() throws SQLException {
         if (conn == null || conn.isClosed()) {
             initializeConnection();

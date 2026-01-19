@@ -6,6 +6,8 @@ import java.util.Random;
 import java.util.Vector;
 
 /**
+ * color util class provide medthod for random color generator
+ *
  * @author MinhCreatorVN
  */
 public class color {

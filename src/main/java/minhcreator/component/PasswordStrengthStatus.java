@@ -13,6 +13,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 
 /**
+ * PasswordStrengthStatus class is used to create a custom password strength status indicator.
  *
  * @author Raven
  * @author Modified by MinhCreatorVN

@@ -3,6 +3,7 @@ package minhcreator.component;
 import javax.swing.*;
 
 /**
+ * PopUp class is used to create a custom pop-up window.
  *
  * @author MinhCreatorVN
  */
@@ -44,7 +45,6 @@ public class PopUp extends JDialog {
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         setVisible(true);
     }
-
 
     // experimental function
     public static void main(String[] arg) {

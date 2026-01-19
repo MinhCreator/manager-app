@@ -6,8 +6,10 @@ import java.util.Hashtable;
 import java.util.Properties;
 
 /**
+ * global class for load App configuration and resources
  *
  * @author MinhCreatorVN
+ * @version 1.0.1 Alpha test ver
  */
 public class global {
     /**

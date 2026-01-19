@@ -4,6 +4,9 @@ package minhcreator.util;
  *
  * @author Raven
  * @author Modified by MinhCreatorVN
+ * @version 1.0
+ * @see minhcreator.util.StyleIcon
+ * @since 2025-01-19
  */
 public class StyleIcon {
     public static final String NEUTRAL = "icon.style icon.neutral icon.border";

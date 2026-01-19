@@ -1,8 +1,8 @@
 package minhcreator.component.page;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import minhcreator.component.Alert.FieldCheck;
 import minhcreator.component.PopUp;
+import minhcreator.component.Security.FieldCheck;
 import minhcreator.functional.database.DB;
 import minhcreator.functional.imageSupport.imgRender;
 import minhcreator.functional.session.sessionManager;
@@ -18,6 +18,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
+ * Login class is used to create a custom login window.
  *
  * @author MinhCreatorVN
  */
@@ -340,7 +341,6 @@ public class Login extends JPanel {
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
                     if (rs.getString("password").equals(pass)) {
-//                        System.out.println(rs.getString("password").equals(pass));
                         if (does_Email_Exist(email)) {
                             return true;
                         }

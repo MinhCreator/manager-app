@@ -10,6 +10,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
 /**
+ * TableBadgeCellRenderer class is used to create a custom table cell renderer for badges.
  *
  * @author Raven
  * @author Modified by MinhCreatorVN

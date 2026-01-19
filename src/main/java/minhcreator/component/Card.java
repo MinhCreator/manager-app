@@ -108,8 +108,21 @@ public class Card extends javax.swing.JPanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         GradientPaint gra = new GradientPaint(0, getHeight(), getBackground(), getWidth(), 0, colorGradient);
         g2.setPaint(gra);
-        g2.fillRect(0, 0, getWidth(), getHeight());
+//        g2.fillRect(0, 0, getWidth(), getHeight());
+        // create and display round border card
+        g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
         super.paintComponent(grphcs);
+    }
+
+    // testing feature and this not be used in main application
+    @Override
+    public void paint(Graphics grphcs) {
+        Graphics2D g2 = (Graphics2D) grphcs.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(getBackground());
+        g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+        g2.dispose();
+        super.paint(grphcs);
     }
 
 }

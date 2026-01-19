@@ -31,7 +31,6 @@ public class Application extends JFrame {
         this.Config = global.Config("/minhcreator/config", "appConfig.properties");
         this.width = Integer.parseInt(Config.get("width"));
         this.height = Integer.parseInt(Config.get("height"));
-//        this.setResizable(false);
         mainForm = new MainForm();
         loginForm = new Login();
         signUpForm = new Sign_up();
@@ -51,6 +50,7 @@ public class Application extends JFrame {
         Notifications.getInstance().setJFrame(this);
     }
 
+    // show form
     public static void showForm(Component component) {
         component.applyComponentOrientation(app.getComponentOrientation());
         app.mainForm.showForm(component);
@@ -110,7 +110,6 @@ public class Application extends JFrame {
 
     static void main(String[] args) {
         FlatJetBrainsMonoFont.install();
-//        FlatArcIJTheme.setup();
         FlatLaf.registerCustomDefaultsSource("minhcreator.themes");
 //        javax.swing.UIManager.put(
 //                "defaultFont",

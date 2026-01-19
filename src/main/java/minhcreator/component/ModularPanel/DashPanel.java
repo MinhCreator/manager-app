@@ -6,6 +6,7 @@ package minhcreator.component.ModularPanel;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import minhcreator.component.RoundPanel;
 import minhcreator.component.model.ModelCard;
 import minhcreator.component.page.Login;
 import minhcreator.functional.database.DB;
@@ -16,6 +17,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -44,7 +47,7 @@ public class DashPanel extends javax.swing.JPanel {
         TotalStock = new minhcreator.component.Card();
         Expense = new minhcreator.component.Card();
         welcomeUserCard = new minhcreator.component.Card();
-        RoundTable = new com.raven.swing.RoundPanel();
+        RoundTable = new RoundPanel();
         TableScrollPanel = new javax.swing.JScrollPane();
         table = new javax.swing.JTable();
         LatestStockAddButton = new javax.swing.JButton();
@@ -57,12 +60,14 @@ public class DashPanel extends javax.swing.JPanel {
                 StaticPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(StaticPanelLayout.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(ProfitCard, javax.swing.GroupLayout.PREFERRED_SIZE, 175, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(ProfitCard, javax.swing.GroupLayout.PREFERRED_SIZE, 235, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(TotalStock, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(Expense, javax.swing.GroupLayout.PREFERRED_SIZE, 175, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
+                                .addComponent(TotalStock, javax.swing.GroupLayout.PREFERRED_SIZE, 235, javax.swing.GroupLayout.PREFERRED_SIZE)
+//                                .addGap(18, 18, 18)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(Expense, javax.swing.GroupLayout.PREFERRED_SIZE, 255, javax.swing.GroupLayout.PREFERRED_SIZE)
+//                                .addGap(18, 18, 18)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(welcomeUserCard, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addContainerGap())
         );
@@ -151,21 +156,25 @@ public class DashPanel extends javax.swing.JPanel {
         table.setDefaultRenderer(Object.class, render);
         loadTableData();
 
-        ProfitCard.setDataSvg(new ModelCard("Profit", getTotalProfit(), new FlatSVGIcon("minhcreator/assets/functional_icon/profit.svg")));
+        // trying get profit, total current stock and cost
+        try {
+            ProfitCard.setDataSvg(new ModelCard("Profit", getProfit(), new FlatSVGIcon("minhcreator/assets/functional_icon/profit.svg")));
+            TotalStock.setDataSvg(new ModelCard("Current storage", getCurrStorage(), new FlatSVGIcon("minhcreator/assets/functional_icon/stock.svg")));
+            Expense.setDataSvg(new ModelCard("Expense", getCost(), new FlatSVGIcon("minhcreator/assets/functional_icon/expense.svg")));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
         ProfitCard.setGradientColor(Color.decode("#fff200"));
-
         TotalStock.setGradientColor(Color.decode("#4c00ff"));
-        TotalStock.setDataSvg(new ModelCard("Current total stock",
-                getTotalStock(sharedSession.getYour_inventory(), "amount", "TotalStock"),
-                new FlatSVGIcon("minhcreator/assets/functional_icon/stock.svg")));
-
         Expense.setGradientColor(Color.decode("#fff870"));
-        Expense.setDataSvg(new ModelCard("Expense", getExpense(), new FlatSVGIcon("minhcreator/assets/functional_icon/expense.svg")));
+
+
     }
 
 
     private void loadTableData() {
-        loadTableData("SELECT * FROM " + sharedSession.getYour_stock_add() + " ORDER BY date ASC");
+        loadTableData("SELECT * FROM " + sharedSession.getUser_cost_table() + " ORDER BY date DESC");
     }
 
     private void loadTableData(String sql) {
@@ -210,58 +219,99 @@ public class DashPanel extends javax.swing.JPanel {
         };
     }
 
-    private int getTotalStock(String stockTable, String column_name, String alias) {
-        String query = "SELECT COUNT(DISTINCT " + column_name + " ) AS " + alias + " FROM " + stockTable;
-        try {
-            conn = DB.getConnection();
-            Statement stmt = conn.createStatement();
+    // Tính lợi nhuận: Doanh thu - Giá vốn trung bình
+    private ResultSet getProfitReport(String user_product, String user_purchase, String user_invoices_details) throws Exception {
+        Connection conn = DB.getConnection();
+        String revenue_cost = "SELECT p.name, " +
+                "SUM(so.quantity * so.unit_price) AS revenue, " +
+                "SUM(so.quantity * (SELECT IFNULL(SUM(import_price * quantity)/SUM(quantity), 0) " +
+                "FROM " + user_purchase + " WHERE product_id = p.id)) AS cost " +
+                "FROM " + user_product + " p JOIN " + user_invoices_details + " so ON p.id = so.product_id GROUP BY p.id";
 
-            ResultSet rs = stmt.executeQuery(query);
-            if (rs.next()) {
-                return rs.getInt(alias);
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-        return 0;
+
+        return conn.prepareStatement(revenue_cost).executeQuery();
     }
 
-    private double getTotalProfit() {
-        String query = "SELECT SUM(amount * (sellprice - price)) AS TotalProfit FROM " + sharedSession.getYour_export_table();
-        try {
-            conn = DB.getConnection();
-            Statement stmt = conn.createStatement();
+    // cal profit
+    private double getProfit() throws Exception {
+        List<Double> revenueList = new ArrayList<>();
+        List<Double> costList = new ArrayList<>();
+        ResultSet rs = getProfitReport(
+                sharedSession.getUser_product(),
+                sharedSession.getUser_cost_table(),
+                sharedSession.getUser_invoice_details()
+        );
 
-            ResultSet rs = stmt.executeQuery(query);
-            if (rs.next()) {
-                return rs.getDouble("TotalProfit");
+        try {
+            while (rs.next()) {
+                String productName = rs.getString("name");
+                double revenue = rs.getDouble("revenue");
+                double cost = rs.getDouble("cost");
+                revenueList.add(revenue);
+                costList.add(cost);
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+
+            // Using Java 8+ Stream API
+            double TotalRevenue = revenueList.stream().mapToDouble(Double::doubleValue).sum();
+            double TotalCost = costList.stream().mapToDouble(Double::doubleValue).sum();
+            return TotalRevenue - TotalCost;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0.0;
+        } finally {
+            // Always close the ResultSet when done
+            try {
+                if (rs != null) rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        return 0;
     }
 
-    private double getExpense() {
-        String query = "SELECT SUM(amount * price) AS Expense FROM " + sharedSession.getYour_stock_add();
-        try {
-            conn = DB.getConnection();
-            Statement stmt = conn.createStatement();
+    // cal cost your spend
+    private double getCost() throws Exception {
+        List<Double> costList = new ArrayList<>();
+        ResultSet rs = getProfitReport(
+                sharedSession.getUser_product(),
+                sharedSession.getUser_cost_table(),
+                sharedSession.getUser_invoice_details()
+        );
 
-            ResultSet rs = stmt.executeQuery(query);
-            if (rs.next()) {
-                return rs.getDouble("Expense");
+        try {
+            while (rs.next()) {
+                double cost = rs.getDouble("cost");
+                costList.add(cost);
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+            return costList.stream().mapToDouble(Double::doubleValue).sum();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0.0;
+        } finally {
+            // Always close the ResultSet when done
+            try {
+                if (rs != null) rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        return 0;
     }
 
+    // get total quantity of product in current storage
+    private int getCurrStorage() throws Exception {
+        Connection conn = DB.getConnection();
+        String currentStorage = "SELECT " + " quantity " + "FROM " + sharedSession.getYour_inventory();
+        ResultSet rs = conn.prepareStatement(currentStorage).executeQuery();
+        List<Integer> qty = new ArrayList<>();
+        while (rs.next()) {
+            qty.add(rs.getInt("quantity"));
+        }
+
+        return qty.stream().mapToInt(Integer::intValue).sum();
+    }
 
     private minhcreator.component.Card Expense;
     private minhcreator.component.Card ProfitCard;
-    private com.raven.swing.RoundPanel RoundTable;
+    private RoundPanel RoundTable;
     private javax.swing.JPanel StaticPanel;
     private javax.swing.JScrollPane TableScrollPanel;
     private minhcreator.component.Card TotalStock;

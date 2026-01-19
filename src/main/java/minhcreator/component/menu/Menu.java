@@ -6,7 +6,6 @@ import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.formdev.flatlaf.util.UIScale;
 import minhcreator.component.menu.mode.LightDarkMode;
 import minhcreator.component.menu.mode.ToolBarAccentColor;
-import minhcreator.util.Shared;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,8 +17,6 @@ import java.util.List;
  * @author Raven
  */
 public class Menu extends JPanel {
-    private final String welcome = "Welcome Back" + Shared.login_username;
-
     private final String menuItems[][] = {
 //            {""},
             {"Dashboard"},
@@ -27,7 +24,7 @@ public class Menu extends JPanel {
 //        {"Inventory", "Inbox", "Read", "Compost"},
             {"Inventory"},
             {"Analytics"},
-            {"Report"},
+            {"Invoice"},
             {"Settings"},
 //        {"~COMPONENT~"},
 //        {"Advanced UI", "Cropper", "Owl Carousel", "Sweet Alert"},

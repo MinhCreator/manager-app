@@ -3,6 +3,7 @@ package minhcreator.component.page;
 import com.formdev.flatlaf.FlatClientProperties;
 import minhcreator.component.PasswordStrengthStatus;
 import minhcreator.functional.database.DB;
+import minhcreator.functional.database.TableInitializer;
 import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
 import net.miginfocom.swing.MigLayout;
@@ -16,6 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Sign_up class is used to create a custom sign-up window.
  *
  * @author MinhCreatorVN
  */
@@ -185,8 +187,7 @@ public class Sign_up extends JPanel {
             Notifications.getInstance().show(Notifications.Type.SUCCESS, "Register successfully! and you will be redirected to login page");
             session = new sessionManager();
             session.register(username, email, new String(txtPassword.getPassword()));
-            init_table(session.getYour_inventory(), session.getYour_export_table(), session.getYour_stock_add());
-
+            TableInitializer.initializeTable(username);
         } else {
             Notifications.getInstance().show(Notifications.Type.ERROR, "Something went wrong. Try again!");
         }
@@ -273,14 +274,4 @@ public class Sign_up extends JPanel {
 
     }
 
-    public void init_table(String inven, String exports, String stockAdd) {
-        String inventory = "CREATE TABLE IF NOT EXISTS " + inven + " (id VARCHAR(255) NOT NULL, name VARCHAR(255), category VARCHAR(255), price DOUBLE, sellprice DOUBLE, amount INT, CONSTRAINT pk_table_1_id PRIMARY KEY (id));";
-        String export = "CREATE TABLE IF NOT EXISTS " + exports + " (id VARCHAR(255) NOT NULL, name VARCHAR(255), category VARCHAR(255), date DATE, price DOUBLE, sellprice DOUBLE, amount INT, PRIMARY KEY (id));";
-        String importStock = "CREATE TABLE IF NOT EXISTS " + stockAdd + " (id VARCHAR(255) NOT NULL, name VARCHAR(255), category VARCHAR(255), date DATE, price DOUBLE, amount INT, PRIMARY KEY (id));";
-        DB database = new DB();
-        database.executionSQL(inventory);
-        database.executionSQL(export);
-        database.executionSQL(importStock);
-
-    }
 }

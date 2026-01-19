@@ -2,6 +2,7 @@ package minhcreator.component.page;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import minhcreator.functional.database.DB;
+import minhcreator.functional.database.TableInitializer;
 import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
 import net.miginfocom.swing.MigLayout;
@@ -12,6 +13,7 @@ import java.awt.*;
 import java.sql.*;
 
 /**
+ * settings class is used to create a custom settings window.
  *
  * @author MinhCreatorVN
  */
@@ -59,12 +61,14 @@ public class settings extends JPanel {
         );
 
         log_OutButt = new JButton("Log out");
+        log_OutButt.putClientProperty(FlatClientProperties.STYLE_CLASS, "primary");
         log_OutButt.addActionListener(e -> {
             letLogOut();
             session_Login.clearSession();
             Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "You have logged out");
         });
         UpdateBut = new JButton("Update");
+        UpdateBut.putClientProperty(FlatClientProperties.STYLE_CLASS, "success");
         UpdateBut.addActionListener(e -> {
             letUpdate();
             Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Your account has been updated");
@@ -72,11 +76,25 @@ public class settings extends JPanel {
         });
         delMyAcc = new JButton("Delete me");
         delMyAcc.addActionListener(e -> {
+
+            int confim = JOptionPane.showConfirmDialog(
+                    this,
+                    "Are you sure you want to delete your account ?",
+                    "Confirm",
+                    JOptionPane.YES_NO_OPTION
+            );
+            if (confim != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            TableInitializer.dropAllTables(session_Login.getUsername());
             deleteMyAccount();
             session_Login.clearSession();
             letLogOut();
             Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Your account has been deleted successfully");
         });
+        delMyAcc.putClientProperty(FlatClientProperties.STYLE_CLASS, "danger");
+
         settingPanel.add(Email_Lb);
         settingPanel.add(Email_Tf);
         settingPanel.add(Username_Lb);
@@ -137,18 +155,13 @@ public class settings extends JPanel {
 
             // Assuming you want to delete the currently logged-in user
             // You'll need to get the current user's ID from the session
-            String currentUserId = session_Login.getId();  // Adjust this based on how you get the current user ID
-            pstmt.setString(1, currentUserId);
+            int currentUserId = Integer.parseInt(session_Login.getId().trim());  // Adjust this based on how you get the current user ID
+            pstmt.setInt(1, currentUserId);
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
                 // Account deleted successfully
                 // Show success message
-                stmt = conn.createStatement();
-                stmt.execute("DROP TABLE " + session_Login.getYour_inventory() + ";");
-                stmt.execute("DROP TABLE " + session_Login.getYour_stock_add() + ";");
-                stmt.execute("DROP TABLE " + session_Login.getYour_export_table() + ";");
-//                stmt.execute("DROP TABLE " + session_Login.getYour_credit() + ";");
                 Notifications.getInstance().show(
                         Notifications.Type.INFO,
                         Notifications.Location.TOP_CENTER,

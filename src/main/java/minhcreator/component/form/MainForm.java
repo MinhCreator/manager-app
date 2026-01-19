@@ -3,14 +3,9 @@ package minhcreator.component.form;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.util.UIScale;
-import minhcreator.component.form.other.AnalyticsForm;
-import minhcreator.component.form.other.FormDashboard;
-import minhcreator.component.form.other.ReportForm;
-import minhcreator.component.form.other.WarehouseInventoryForm;
 import minhcreator.component.menu.Menu;
 import minhcreator.component.menu.MenuAction;
-import minhcreator.component.page.Login;
-import minhcreator.component.page.settings;
+import minhcreator.component.page.*;
 import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
 
@@ -91,7 +86,7 @@ public class MainForm extends JLayeredPane {
 //                sessionManager currentSession = Login.session;
                 sessionManager currentSession = Login.getInstance().getSession();
 //                if (currentSession != null) {
-                Application.showForm(new FormDashboard(currentSession));
+                Application.showForm(new Dashboard(currentSession));
 //                } else {
 //                    // Handle the case where there's no active session
 //                    JOptionPane.showMessageDialog(Application.getInstance(),
@@ -101,11 +96,11 @@ public class MainForm extends JLayeredPane {
 //                    Application.logout(); // Or redirect to login
 //                }
             } else if (index == 1) {
-                Application.showForm(new WarehouseInventoryForm());
+                Application.showForm(new WarehouseInventory());
             } else if (index == 2) {
-                Application.showForm(new AnalyticsForm());
+                Application.showForm(new Analytics());
             } else if (index == 3) {
-                Application.showForm(new ReportForm());
+                Application.showForm(new invoice());
             } else if (index == 4) {
                 Application.showForm(new settings());
             } else {

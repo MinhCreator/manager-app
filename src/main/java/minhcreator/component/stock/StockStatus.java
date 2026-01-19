@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
+ * StockStatus enum is used to create a custom stock status indicator.
  *
  * @author Raven
  * @author Modified by MinhCreatorVN

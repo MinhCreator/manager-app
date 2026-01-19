@@ -1,6 +1,11 @@
 package minhcreator.util;
 
 /**
+ * Utility class for method support for password strength checking
+ *
+ * <p>
+ * This class contains utility methods for checking password strength.
+ * </p>
  *
  * @author Raven
  * @author Modified by MinhCreatorVN
