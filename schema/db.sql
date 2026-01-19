@@ -1,4 +1,4 @@
-CREATE DATABASE warehouse_pro;
+CREATE DATABASE warehouse;
 
 
 CREATE TABLE products (
@@ -24,7 +24,7 @@ CREATE TABLE purchase_orders (
     product_id INT,
     quantity INT,
     import_price DOUBLE,
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date DATE,
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
@@ -34,7 +34,7 @@ CREATE TABLE sales_orders (
     product_id INT,
     quantity INT,
     selling_price DOUBLE,
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date DATE,
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
@@ -43,7 +43,7 @@ CREATE TABLE invoices (
     invoice_id INT PRIMARY KEY AUTO_INCREMENT,
     customer_name VARCHAR(255),
     total_amount DOUBLE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATE
 );
 
 -- Chi tiết từng dòng trong hóa đơn
