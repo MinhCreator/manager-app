@@ -1,4 +1,4 @@
-package minhcreator.debugFeature;
+package minhcreator.component;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.fonts.jetbrains_mono.FlatJetBrainsMonoFont;

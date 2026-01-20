@@ -9,7 +9,6 @@ import minhcreator.functional.database.DB;
 import minhcreator.functional.location.TimeManager;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -39,6 +38,7 @@ public class invoicesPanel extends javax.swing.JPanel {
 
     public invoicesPanel() {
         init();
+//        FontManager.LoadFont("defaultFont", FlatJetBrainsMonoFont.FAMILY, Font.BOLD, 13);
         getDataInvoice();
 
         table_invoices.getSelectionModel().addListSelectionListener(e -> {
@@ -87,11 +87,11 @@ public class invoicesPanel extends javax.swing.JPanel {
 
     private JPanel SearchPanel() {
         JPanel SearchComponent = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        SearchComponent.setBackground(COLOR);
+//        SearchComponent.setBackground(COLOR);
 
         JLabel ID_invoices_lb = new JLabel("ID invoices");
         ID_invoices_lb.setFont(FONT_ITEM);
-        ID_invoices_lb.setForeground(Color.WHITE);
+//        ID_invoices_lb.setForeground(Color.WHITE);
 
 
         JTextField ID_invoices_field = new JTextField(20);
@@ -99,13 +99,11 @@ public class invoicesPanel extends javax.swing.JPanel {
 
         SearchBut = new JButton("Search");
         SearchBut.setFont(FONT_ITEM);
-        SearchBut.setForeground(Color.WHITE);
-        SearchBut.setBackground(COLOR);
+        SearchBut.putClientProperty(FlatClientProperties.STYLE_CLASS, "info");
 
         refreshBut = new JButton(" Refresh");
         refreshBut.setFont(FONT_ITEM);
-        refreshBut.setForeground(Color.WHITE);
-        refreshBut.setBackground(COLOR);
+        refreshBut.putClientProperty(FlatClientProperties.STYLE_CLASS, "secondary");
 
         SearchComponent.add(ID_invoices_lb);
         SearchComponent.add(ID_invoices_field);
@@ -117,7 +115,6 @@ public class invoicesPanel extends javax.swing.JPanel {
 
     private JPanel TableComponent() {
         JPanel tablePanel = new JPanel(new BorderLayout(5, 5));
-        tablePanel.setBackground(COLOR);
         JPanel invoice_Panel = new JPanel(new BorderLayout());
 
         String[] col_invoice = {"ID invoices", "Created at", "Total"};
@@ -127,10 +124,13 @@ public class invoicesPanel extends javax.swing.JPanel {
         JTableHeader header = table_invoices.getTableHeader();
         header.setForeground(COLOR);
         header.setFont(FONT_ITEM);
+        JLabel title = new JLabel("Invoice");
+        title.setForeground(Color.decode("#4527a3"));
+        title.setFont(new Font("Cascadia Code", Font.BOLD, 20));
 
+        invoice_Panel.add(title, BorderLayout.PAGE_START);
         invoice_Panel.add(new JScrollPane(table_invoices), BorderLayout.CENTER);
         invoice_Panel.setPreferredSize(new Dimension(400, 0));
-        invoice_Panel.setBorder(BorderFactory.createTitledBorder(new LineBorder(COLOR, 1, true), "Invoices list ", 0, 0, FONT_ITEM, COLOR));
 
         tablePanel.add(invoice_Panel, BorderLayout.WEST);
 
@@ -144,8 +144,12 @@ public class invoicesPanel extends javax.swing.JPanel {
         header1.setForeground(COLOR);
         header1.setFont(FONT_ITEM);
 
+        JLabel title_detail = new JLabel("Invoice detail");
+        title_detail.setForeground(Color.decode("#29384a"));
+        title_detail.setFont(new Font("Cascadia Code", Font.BOLD, 20));
+
+        invoice_detailPanel.add(title_detail, BorderLayout.PAGE_START);
         invoice_detailPanel.add(new JScrollPane(table_invoice_detail), BorderLayout.CENTER);
-        invoice_detailPanel.setBorder(BorderFactory.createTitledBorder(new LineBorder(COLOR, 1, true), "Invoice details ", 0, 0, FONT_ITEM, COLOR));
 
         tablePanel.add(invoice_detailPanel, BorderLayout.CENTER);
 
@@ -154,37 +158,29 @@ public class invoicesPanel extends javax.swing.JPanel {
 
     private JPanel PanelSouth() {
         JPanel panel3 = new JPanel(new BorderLayout(10, 10));
-        panel3.setBackground(COLOR);
 
         JPanel MoneyPanel = new JPanel(new GridLayout(3, 2, 10, 10));
-        MoneyPanel.setBackground(COLOR);
 
         Total_Money = new JLabel(" Total: ");
         Total_Money.setFont(new Font("SansSerif", Font.BOLD, 14));
-        Total_Money.setForeground(Color.WHITE);
+
 
         Total_Money_Sum = new JLabel(" Invoice total: ");
         Total_Money_Sum.setFont(new Font("SansSerif", Font.BOLD, 14));
-        Total_Money_Sum.setForeground(Color.WHITE);
 
         MoneyPanel.add(Total_Money, "gap 0 20 10 0");
         MoneyPanel.add(Total_Money_Sum, "gap 0 20 10 0");
 
-
         panel3.add(MoneyPanel, BorderLayout.WEST);
 
-        //panel nut
+        //panel button
         JPanel ButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        ButtonPanel.setBackground(COLOR);
 
         printing = new JButton("Print invoice");
         printing.setFont(FONT_ITEM);
-        printing.setBackground(COLOR);
-        printing.setForeground(Color.WHITE);
+
         delete_But = new JButton("Delete invoice");
         delete_But.setFont(FONT_ITEM);
-        delete_But.setBackground(COLOR);
-        delete_But.setForeground(Color.WHITE);
 
         printing.addActionListener(e -> InvoicePDF_Printing());
         delete_But.addActionListener(e -> delete_invoice());

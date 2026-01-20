@@ -54,7 +54,7 @@ public class AnalyticsPanel extends SimpleForm {
         );
         createPieChart();
         createLineChart();
-        createBarChart();
+//        createBarChart();
     }
 
     private void createPieChart() {
@@ -131,7 +131,7 @@ public class AnalyticsPanel extends SimpleForm {
                 + "border:5,5,5,5,$Component.borderColor,,20");
 
         add(headerPanel, "align left,wrap");
-        add(lineChart, "w 100:1075:1500,height 240");
+        add(lineChart, "w 100:1075:1500,height 400");
         updateChartWithSelectedDates(datePicker);
 
     }

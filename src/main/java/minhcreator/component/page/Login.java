@@ -1,12 +1,15 @@
 package minhcreator.component.page;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import minhcreator.component.CustomDialog;
 import minhcreator.component.PopUp;
 import minhcreator.component.Security.FieldCheck;
+import minhcreator.component.model.Product;
 import minhcreator.functional.database.DB;
 import minhcreator.functional.imageSupport.imgRender;
 import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
+import minhcreator.service.WarehouseService;
 import net.miginfocom.swing.MigLayout;
 import raven.toast.Notifications;
 
@@ -16,6 +19,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Login class is used to create a custom login window.
@@ -271,7 +277,6 @@ public class Login extends JPanel {
 
     private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {
 
-
         if (isValidLogin()) {  // Only proceed if login is valid
             session = new sessionManager();
             String email = txtUsername.getText().trim();
@@ -288,11 +293,23 @@ public class Login extends JPanel {
                     "Login successful"
             );
             isLogin = true;
+            checkStockStatus();
         } else {
             Application.logout();
             isLogin = false;
+//            Notifications.getInstance().show(
+//                    Notifications.Type.ERROR,
+//                    Notifications.Location.TOP_CENTER,
+//                    "Login failure");
+            new CustomDialog(Application.getInstance(),
+                    true,
+                    "Login",
+                    "Login failure",
+                    "minhcreator/assets/icon/svg/error.svg",
+                    "Confirm",
+                    ScaleSVG
+            );
         }
-//        Application.login();
     }
 
     public static Login getInstance() {
@@ -454,6 +471,56 @@ public class Login extends JPanel {
         return session;
     }
 
+    // Add this method to check stock status
+    private void checkStockStatus() {
+        try {
+            sessionManager session = getSession();
+            if (session == null) return;
+
+            String userInventory = session.getUsername() + "_inventory";
+            String userProduct = session.getUsername() + "_products";
+
+            // Get all products with their inventory
+            java.util.List<Product> products = WarehouseService.getAllProducts(userProduct, userInventory);
+
+            int lowStockCount = 0;
+            int outOfStockCount = 0;
+
+            for (Product product : products) {
+                if (product.getQuantity() == 0) {
+                    outOfStockCount++;
+                } else if (product.getQuantity() <= 10) { // Assuming 10 is the threshold for low stock
+                    lowStockCount++;
+                }
+            }
+
+            // Show appropriate notifications
+            if (outOfStockCount > 0) {
+                Notifications.getInstance().show(
+                        Notifications.Type.ERROR,
+                        Notifications.Location.TOP_CENTER,
+                        "Warning: " + outOfStockCount + " product(s) are out of stock!"
+                );
+            }
+
+            if (lowStockCount > 0) {
+                Notifications.getInstance().show(
+                        Notifications.Type.WARNING,
+                        Notifications.Location.TOP_CENTER,
+                        "Warning: " + lowStockCount + " product(s) are low in stock!"
+                );
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifications.getInstance().show(
+                    Notifications.Type.ERROR,
+                    Notifications.Location.TOP_CENTER,
+                    "Error checking stock status: " + e.getMessage()
+            );
+        }
+    }
+
     public static Login login;
     public JTextField txtUsername;
     public JPasswordField txtPassword;
@@ -464,5 +531,5 @@ public class Login extends JPanel {
     FieldCheck fieldCheck = new FieldCheck();
     public Connection conn = null;
     public static sessionManager session;
-
+    private static List<Integer> ScaleSVG = new ArrayList<>(Arrays.asList(100, 100));
 }
