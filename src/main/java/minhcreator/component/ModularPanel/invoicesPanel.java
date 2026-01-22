@@ -161,14 +161,14 @@ public class invoicesPanel extends javax.swing.JPanel {
 
         JPanel MoneyPanel = new JPanel(new GridLayout(3, 2, 10, 10));
 
-        Total_Money = new JLabel(" Total: ");
-        Total_Money.setFont(new Font("SansSerif", Font.BOLD, 14));
+//        Total_Money = new JLabel(" Total: ");
+//        Total_Money.setFont(new Font("SansSerif", Font.BOLD, 14));
 
 
         Total_Money_Sum = new JLabel(" Invoice total: ");
         Total_Money_Sum.setFont(new Font("SansSerif", Font.BOLD, 14));
 
-        MoneyPanel.add(Total_Money, "gap 0 20 10 0");
+//        MoneyPanel.add(Total_Money, "gap 0 20 10 0");
         MoneyPanel.add(Total_Money_Sum, "gap 0 20 10 0");
 
         panel3.add(MoneyPanel, BorderLayout.WEST);

@@ -120,7 +120,7 @@ public class WarehousePanel extends JPanel {
 
         sortPanel.add(lblSort);
         sortPanel.add(sortByBox);
-        sortPanel.add(sortButton);
+//        sortPanel.add(sortButton);
 
         controlPanel.add(searchPanel, BorderLayout.WEST);
         controlPanel.add(sortPanel, BorderLayout.EAST);
@@ -488,7 +488,8 @@ public class WarehousePanel extends JPanel {
                 int INT_CHANGE = 2;
                 if (OptionComboBox.getSelectedIndex() == INT_IN) {
                     if (quantity_str_to_int > 0) {
-                        WarehouseService.processStock(productId, quantity_str_to_int, price_str_to_double, "IN", user_inventory, user_purchase, user_sale);
+//                        WarehouseService.processStock(productId, quantity_str_to_int, price_str_to_double, "IN", user_inventory, user_purchase, user_sale);
+                        WarehouseService.processStock(productId, Integer.parseInt(StockAmountField.getText().trim()), price_str_to_double, "IN", user_inventory, user_purchase, user_sale);
 
                     } else Notifications.getInstance().show(
                             Notifications.Type.INFO,
