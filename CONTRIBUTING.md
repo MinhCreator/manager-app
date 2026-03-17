@@ -1,4 +1,4 @@
-# **Contributing to ChartDB**
+# **Contributing to Management app**
 
 Thank you for your interest in contributing to ChartDB! We want to make your experience as easy as possible.
 
