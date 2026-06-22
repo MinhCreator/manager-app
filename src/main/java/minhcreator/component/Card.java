@@ -1,128 +1,105 @@
 package minhcreator.component;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import minhcreator.component.model.ModelCard;
 
+import javax.swing.*;
 import java.awt.*;
 import java.text.DecimalFormat;
 
-/**
- *
- * @author Raven
- * @author Modified by MinhCreatorVN
- */
-public class Card extends javax.swing.JPanel {
+public class Card extends JPanel {
 
-
-    public Color getGradientColor() {
-        return colorGradient;
-    }
-
-    public void setGradientColor(Color gradientColor) {
-        this.colorGradient = gradientColor;
-    }
-
-    private Color colorGradient;
-    private javax.swing.JLabel lbIcon;
-    private javax.swing.JLabel lbTitle;
-    private javax.swing.JLabel lbValues;
+    private Color accentColor;
+    private JLabel lbIcon;
+    private JLabel lbTitle;
+    private JLabel lbValues;
+    private JPanel contentPanel;
 
     public Card() {
-        initComponents();
+        init();
+    }
+
+    private void init() {
         setOpaque(false);
-        setBackground(new Color(112, 69, 246));
-        colorGradient = new Color(255, 255, 255);
+        accentColor = new Color(103, 80, 164);
 
+        contentPanel = new JPanel(new GridBagLayout());
+        contentPanel.setOpaque(false);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        lbIcon = new JLabel();
+        lbIcon.setHorizontalAlignment(SwingConstants.RIGHT);
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridheight = 2;
+        gbc.weightx = 0.2;
+        gbc.anchor = GridBagConstraints.EAST;
+        contentPanel.add(lbIcon, gbc);
+
+        lbTitle = new JLabel();
+        lbTitle.putClientProperty(FlatClientProperties.STYLE, "font:bold -1");
+        lbTitle.setForeground(UIManager.getColor("Label.disabledForeground"));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridheight = 1;
+        gbc.weightx = 0.8;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        contentPanel.add(lbTitle, gbc);
+
+        lbValues = new JLabel();
+        lbValues.putClientProperty(FlatClientProperties.STYLE, "font:bold +4");
+        gbc.gridy = 1;
+        contentPanel.add(lbValues, gbc);
+
+        setLayout(new BorderLayout());
+        add(contentPanel, BorderLayout.CENTER);
     }
 
-    public void setDataIcon(ModelCard data) {
-        DecimalFormat df = new DecimalFormat("#,##0.##");
+    public void setData(ModelCard data) {
         lbTitle.setText(data.getTitle());
-        lbValues.setText(df.format(data.getValues()));
-        lbIcon.setIcon(data.getIcon());
+        if (data.getUserName() != null && !data.getUserName().isEmpty()) {
+            lbValues.setText(data.getUserName());
+        } else {
+            DecimalFormat df = new DecimalFormat("#,##0.##");
+            lbValues.setText(df.format(data.getValues()));
+        }
     }
 
-    public void setDataNoIcon(ModelCard data) {
-        lbTitle.setText(data.getTitle());
-        lbValues.setText(data.getUserName());
+    public void setIcon(Icon icon) {
+        lbIcon.setIcon(icon);
     }
 
-    public void setDataSvg(ModelCard data) {
-        DecimalFormat df = new DecimalFormat("#,##0.##");
-        lbTitle.setText(data.getTitle());
-        lbValues.setText(df.format(data.getValues()));
-        lbIcon.setIcon(data.getSvg());
+    public void setAccentColor(Color color) {
+        this.accentColor = color;
+        repaint();
     }
 
-
-    private void initComponents() {
-        lbTitle = new javax.swing.JLabel();
-        lbValues = new javax.swing.JLabel();
-        lbIcon = new javax.swing.JLabel();
-
-        setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        lbTitle.setFont(new java.awt.Font("sansserif", 1, 18)); // NOI18N
-        lbTitle.setForeground(new java.awt.Color(225, 225, 225));
-        lbTitle.setText("Title");
-
-        lbValues.setFont(new java.awt.Font("sansserif", 0, 24)); // NOI18N
-        lbValues.setForeground(new java.awt.Color(225, 225, 225));
-        lbValues.setText("Values");
-
-        lbIcon.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                        .addComponent(lbTitle)
-                                                        .addComponent(lbValues))
-                                                .addGap(18, 18, 18)
-                                                .addComponent(lbIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(lbTitle)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(lbValues))
-                                        .addComponent(lbIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                                .addContainerGap())))
-        );
+    public Color getAccentColor() {
+        return accentColor;
     }
 
     @Override
-    protected void paintComponent(Graphics grphcs) {
-        Graphics2D g2 = (Graphics2D) grphcs;
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        GradientPaint gra = new GradientPaint(0, getHeight(), getBackground(), getWidth(), 0, colorGradient);
-        g2.setPaint(gra);
-//        g2.fillRect(0, 0, getWidth(), getHeight());
-        // create and display round border card
-        g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
-        super.paintComponent(grphcs);
-    }
 
-    // testing feature and this not be used in main application
-    @Override
-    public void paint(Graphics grphcs) {
-        Graphics2D g2 = (Graphics2D) grphcs.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(getBackground());
-        g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+        Color bg = UIManager.getColor("Panel.background");
+        Color lighter = new Color(
+                Math.min(255, bg.getRed() + 20),
+                Math.min(255, bg.getGreen() + 20),
+                Math.min(255, bg.getBlue() + 20)
+        );
+        GradientPaint grad = new GradientPaint(0, 0, lighter, getWidth(), getHeight(), bg);
+        g2.setPaint(grad);
+        g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
+
+        g2.setColor(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 40));
+        g2.fillRoundRect(0, 0, 6, getHeight(), 3, 3);
+
         g2.dispose();
-        super.paint(grphcs);
+        super.paintComponent(g);
     }
-
 }

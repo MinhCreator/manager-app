@@ -2,15 +2,18 @@ package minhcreator.component.ModularPanel;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import minhcreator.component.Refreshable;
 import minhcreator.component.model.Product;
 import minhcreator.component.stock.StockStatus;
 import minhcreator.component.stock.TableBadgeCellRenderer;
-import minhcreator.functional.database.DB;
+import minhcreator.functional.database.dao.InventoryDAO;
 import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
 import minhcreator.service.WarehouseService;
 import minhcreator.service.orderPanel;
 import minhcreator.service.orderService;
+import minhcreator.util.AppLogger;
+import minhcreator.util.UIRefreshScheduler;
 import net.miginfocom.swing.MigLayout;
 import raven.toast.Notifications;
 
@@ -18,10 +21,6 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +28,7 @@ import java.util.Vector;
 
 import static minhcreator.component.page.Login.login;
 
-public class WarehousePanel extends JPanel {
+public class WarehousePanel extends JPanel implements Refreshable {
     private JTable table = new JTable();
     private JPanel Rightpanel, controlPanel, searchPanel, sortPanel, bottomPanel, StockPanel;
     private JLabel lblSearch, lblSort, StockID, StockName, StockPrice, StockAmount, StockSellPrice, StockCategory;
@@ -48,6 +47,7 @@ public class WarehousePanel extends JPanel {
     public WarehousePanel() {
         init();
         initComponents();
+        UIRefreshScheduler.getInstance().register(this);
     }
 
     private void init() {
@@ -237,43 +237,26 @@ public class WarehousePanel extends JPanel {
     public List<Product> buildsearchProducts(String user_product, String user_inv,
                                              String searchText) {
         List<Product> list = new ArrayList<>();
+        InventoryDAO inventoryDAO = new InventoryDAO();
+        int userId = login.getInstance().session.getUserId();
 
-        // Map UI field names to database column names
-
-        String sql = "SELECT p.id, p.UPID, p.name, i.category, i.price, i.selling_price, i.quantity " +
-                "FROM " + user_product + " p " +
-                "LEFT JOIN " + user_inv + " i ON p.id = i.product_id " +
-                "WHERE 1=1";
-
+        List<Object[]> rows;
         if (searchText != null && !searchText.trim().isEmpty()) {
-            sql += " AND (p.name LIKE ? OR i.category LIKE ? OR p.UPID LIKE ?)";
+            rows = inventoryDAO.searchProductsWithInventory(userId, searchText.trim());
+        } else {
+            rows = inventoryDAO.getProductsWithInventory(userId);
         }
-        try (Connection conn = DB.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            // Set search parameters if search text is provided
-            if (searchText != null && !searchText.trim().isEmpty()) {
-                String searchPattern = "%" + searchText.trim() + "%";
-                ps.setString(1, searchPattern);
-                ps.setString(2, searchPattern);
-                ps.setString(3, searchPattern);
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(new Product(
-                            rs.getInt("id"),
-                            rs.getString("UPID"),
-                            rs.getString("name"),
-                            rs.getString("category"),
-                            rs.getDouble("price"),
-                            rs.getDouble("selling_price"),
-                            rs.getInt("quantity")
-                    ));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        for (Object[] row : rows) {
+            list.add(new Product(
+                    row[0] != null ? (int) row[0] : 0,
+                    row[1] != null ? (String) row[1] : "",
+                    row[2] != null ? (String) row[2] : "",
+                    row[3] != null ? (String) row[3] : "",
+                    row[4] != null ? (double) row[4] : 0.0,
+                    row[5] != null ? (double) row[5] : 0.0,
+                    row[6] != null ? (int) row[6] : 0
+            ));
         }
         return list;
     }
@@ -580,7 +563,7 @@ public class WarehousePanel extends JPanel {
                         model.removeRow(i);
                         anyDeleted = true;
                     }
-                } catch (SQLException ex) {
+                } catch (Exception ex) {
                     ex.printStackTrace();
                     Notifications.getInstance().show(
                             Notifications.Type.ERROR,
@@ -677,63 +660,31 @@ public class WarehousePanel extends JPanel {
     }
 
     public List<Product> sortProducts(String user_product, String user_inv, String sortField, String sortOrder) {
-        String col;
-        if ("name".equals(sortField)) col = "name";
-        else if ("category".equals(sortField)) col = "category";
-        else if ("price".equals(sortField)) col = "price";
-        else if ("quantity".equals(sortField)) col = "quantity";
-        else if ("UPID".equals(sortField)) col = "UPID";
-        else col = "id";
-
+        int userId = login.getInstance().session.getUserId();
         List<Product> list = new ArrayList<>();
-        String sql = "SELECT p.id, p.UPID, p.name, i.category, i.price, i.selling_price, i.quantity " +
-                "FROM " + user_product + " p " +
-                "LEFT JOIN " + user_inv + " i ON p.id = i.product_id "
-                + "ORDER BY " + col + " " + sortOrder;
-
-        try (Connection conn = DB.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                list.add(new Product(
-
-                        rs.getInt("id"),
-                        rs.getString("UPID"),
-                        rs.getString("name"),
-                        rs.getString("category"),
-                        rs.getDouble("price"),
-                        rs.getDouble("selling_price"),
-                        rs.getInt("quantity")
-                ));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        List<Object[]> rows = new InventoryDAO().getProductsWithInventory(userId);
+        for (Object[] row : rows) {
+            list.add(new Product(
+                    row[0] != null ? (int) row[0] : 0,
+                    row[1] != null ? (String) row[1] : "",
+                    row[2] != null ? (String) row[2] : "",
+                    row[3] != null ? (String) row[3] : "",
+                    row[4] != null ? (double) row[4] : 0.0,
+                    row[5] != null ? (double) row[5] : 0.0,
+                    row[6] != null ? (int) row[6] : 0
+            ));
         }
-
         return list;
-//        loadTableData("SELECT * FROM sdata ORDER BY " + col + " DESC");
     }
 
     public void reloadUI() {
-        // Clear any existing selections
         table.clearSelection();
-
-        // Clear the search field
         searchField.setText("");
-
-        // Reset the sort combo box to default
         sortByBox.setSelectedIndex(0);
-
-        // Force a complete refresh of the table data
         refreshTable(product, inv);
-
-        // Force update of the UI
         SwingUtilities.invokeLater(() -> {
             revalidate();
             repaint();
-
-            // Show a notification that the UI has been reloaded
             Notifications.getInstance().show(
                     Notifications.Type.INFO,
                     Notifications.Location.TOP_CENTER,
@@ -742,4 +693,20 @@ public class WarehousePanel extends JPanel {
         });
     }
 
+    // ─── Refreshable ──────────────────────────────────────────────────
+
+    @Override
+    public void refreshData() {
+        EventQueue.invokeLater(() -> {
+            refreshTable(product, inv);
+            revalidate();
+            repaint();
+            AppLogger.debug("Warehouse", "Auto-refreshed inventory table");
+        });
+    }
+
+    @Override
+    public int getRefreshIntervalMs() {
+        return 15000;
+    }
 }

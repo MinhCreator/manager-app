@@ -8,6 +8,7 @@ import minhcreator.component.menu.MenuAction;
 import minhcreator.component.page.*;
 import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
+import minhcreator.util.AppLogger;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -103,6 +104,10 @@ public class MainForm extends JLayeredPane {
                 Application.showForm(new invoice());
             } else if (index == 4) {
                 Application.showForm(new settings());
+            } else if (index == 5) {
+                Application.showForm(new Logs());
+            } else if (index == 6) {
+                Application.showForm(new AppConfigPage());
             } else {
                 action.cancel();
             }

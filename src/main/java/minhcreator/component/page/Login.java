@@ -1,24 +1,23 @@
 package minhcreator.component.page;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.formdev.flatlaf.FlatClientProperties;
 import minhcreator.component.CustomDialog;
 import minhcreator.component.PopUp;
 import minhcreator.component.Security.FieldCheck;
 import minhcreator.component.model.Product;
-import minhcreator.functional.database.DB;
+import minhcreator.entity.UserEntity;
+import minhcreator.functional.database.dao.UserDAO;
 import minhcreator.functional.imageSupport.imgRender;
 import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
 import minhcreator.service.WarehouseService;
+import minhcreator.util.AppLogger;
 import net.miginfocom.swing.MigLayout;
 import raven.toast.Notifications;
 
 import javax.swing.*;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -277,24 +276,25 @@ public class Login extends JPanel {
 
     private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {
 
-        if (isValidLogin()) {  // Only proceed if login is valid
+        if (isValidLogin()) {
             session = new sessionManager();
             String email = txtUsername.getText().trim();
             String user = getUserUsername(email);
-            String pass = getUserUserPass(email);  // Get password from DB, not from input
+            String pass = getUserUserPass(email);
             String id = getId(email);
             session.login(id, user, email, pass);
             session.createSession(user, email, pass);
             Application.login();
-            // Only show success message if we actually logged in
             Notifications.getInstance().show(
                     Notifications.Type.SUCCESS,
                     Notifications.Location.TOP_CENTER,
                     "Login successful"
             );
+            AppLogger.info("Login", "User '" + user + "' logged in successfully");
             isLogin = true;
             checkStockStatus();
         } else {
+            AppLogger.warning("Login", "Failed login attempt for: " + txtUsername.getText().trim());
             Application.logout();
             isLogin = false;
 //            Notifications.getInstance().show(
@@ -347,71 +347,48 @@ public class Login extends JPanel {
     }
 
     public boolean attemp_Email_Login() {
-
         String email = txtUsername.getText().trim();
         String pass = new String(txtPassword.getPassword()).trim();
-
-        String query = "SELECT password FROM users WHERE email =?";
-        try (Connection conn = DB.getConnection()) {
-            PreparedStatement pst = conn.prepareStatement(query);
-            pst.setString(1, email);
-            try (ResultSet rs = pst.executeQuery()) {
-                if (rs.next()) {
-                    if (rs.getString("password").equals(pass)) {
-                        if (does_Email_Exist(email)) {
-                            return true;
-                        }
-                    } else {
-                        Notifications.getInstance().show(
-                                Notifications.Type.ERROR,
-                                Notifications.Location.TOP_CENTER,
-                                "Invalid email or password and May be your account not existed"
-                        );
-                    }
-                }
-            } catch (Exception e) {
-                Notifications.getInstance().show(
-                        Notifications.Type.ERROR,
-                        Notifications.Location.TOP_CENTER,
-                        "Invalid username or password and May be your account not existed"
-                );
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        UserDAO userDAO = new UserDAO();
+        UserEntity user = userDAO.findByEmail(email);
+        if (user == null) {
+            Notifications.getInstance().show(
+                    Notifications.Type.ERROR,
+                    Notifications.Location.TOP_CENTER,
+                    "Invalid email or password"
+            );
+            return false;
         }
+        String storedPass = user.getPassword();
+        if (storedPass == null || storedPass.isEmpty()) return false;
+        if (isBcrypt(storedPass)) {
+            if (BCrypt.verifyer().verify(pass.toCharArray(), storedPass).verified) {
+                return true;
+            }
+        } else {
+            if (storedPass.equals(pass)) {
+                user.setPassword(BCrypt.withDefaults().hashToString(12, pass.toCharArray()));
+                userDAO.update(user);
+                return true;
+            }
+        }
+        Notifications.getInstance().show(
+                Notifications.Type.ERROR,
+                Notifications.Location.TOP_CENTER,
+                "Invalid email or password"
+        );
         return false;
     }
 
+    private static boolean isBcrypt(String hash) {
+        return hash.startsWith("$2a$") || hash.startsWith("$2b$") || hash.startsWith("$2y$");
+    }
+
     public boolean does_Email_Exist(String email) {
-        // The SQL query to count matching usernames
-
-        String query = "SELECT COUNT(email) FROM users WHERE email = ?";
-
-        // Use try-with-resources for automatic closing of connections and statements
-        try (Connection conn = DB.getConnection(); PreparedStatement pst = conn.prepareStatement(query)) {
-
-            // Set the email parameter safely
-            pst.setString(1, email);
-
-            // Execute the query
-            try (ResultSet rs = pst.executeQuery()) {
-                if (rs.next()) {
-                    int count = rs.getInt(1); // Get the value of the first (and only) column
-
-                    return count > 0; // email exists
-                }
-            }
-        } catch (SQLException ex) {
-            System.err.println("Database Error during username check: " + ex.getMessage());
-            Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, ex.getMessage());
-
-        }
-        return false; // Username is Unavailable in table
+        return new UserDAO().findByEmail(email) != null;
     }
 
     public String matchText(String text) {
-
         if (fieldCheck.emailCheck(text)) {
             return "email";
         } else {
@@ -420,51 +397,18 @@ public class Login extends JPanel {
     }
 
     public String getUserUsername(String email) {
-        String sql = "SELECT username FROM users WHERE email = ?";
-        try (Connection conn = DB.getConnection(); PreparedStatement pst = conn.prepareStatement(sql)) {
-            pst.setString(1, email);
-            try (ResultSet rs = pst.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("username");
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-        return null;
+        UserEntity user = new UserDAO().findByEmail(email);
+        return user != null ? user.getUsername() : null;
     }
 
     public String getUserUserPass(String email) {
-        String sql = "SELECT password FROM users WHERE email = ?";
-        try (Connection conn = DB.getConnection(); PreparedStatement pst = conn.prepareStatement(sql)) {
-            pst.setString(1, email);
-            try (ResultSet rs = pst.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("password");
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-        return null;
+        UserEntity user = new UserDAO().findByEmail(email);
+        return user != null ? user.getPassword() : null;
     }
 
     public String getId(String email) {
-        String execution = "SELECT id FROM users WHERE email = ?";
-        try (Connection conn = DB.getConnection(); PreparedStatement pst = conn.prepareStatement(execution)) {
-            pst.setString(1, email);
-            try (ResultSet rs = pst.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("id");
-                }
-            }
-        } catch (Exception e) {
-            return null;
-        }
-
-        return null;
+        UserEntity user = new UserDAO().findByEmail(email);
+        return user != null ? String.valueOf(user.getId()) : null;
     }
 
     public sessionManager getSession() {
@@ -477,10 +421,9 @@ public class Login extends JPanel {
             sessionManager session = getSession();
             if (session == null) return;
 
-            String userInventory = session.getUsername() + "_inventory";
-            String userProduct = session.getUsername() + "_products";
+            String userInventory = session.getYour_inventory();
+            String userProduct = session.getUser_product();
 
-            // Get all products with their inventory
             java.util.List<Product> products = WarehouseService.getAllProducts(userProduct, userInventory);
 
             int lowStockCount = 0;
@@ -527,9 +470,7 @@ public class Login extends JPanel {
     private JCheckBox UserAgreement;
     private JButton cmdLogin;
     private boolean isLogin;
-    public DB database = new DB();
     FieldCheck fieldCheck = new FieldCheck();
-    public Connection conn = null;
     public static sessionManager session;
     private static List<Integer> ScaleSVG = new ArrayList<>(Arrays.asList(100, 100));
 }

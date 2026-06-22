@@ -4,11 +4,13 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.extras.FlatAnimatedLafChange;
 import com.formdev.flatlaf.fonts.jetbrains_mono.FlatJetBrainsMonoFont;
-import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import minhcreator.component.form.MainForm;
 import minhcreator.component.page.Login;
 import minhcreator.component.page.Sign_up;
+import minhcreator.functional.database.HibernateUtil;
 import minhcreator.functional.fontRender.FontManager;
+import minhcreator.util.AppLogger;
+import minhcreator.util.ThemeManager;
 import minhcreator.util.global;
 import raven.toast.Notifications;
 
@@ -16,11 +18,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Dictionary;
 
-/**
- *
- * @author Raven
- * @author Modified and added new feature by MinhCreatorVN
- */
 public class Application extends JFrame {
     private static Application app;
     private final MainForm mainForm;
@@ -40,7 +37,6 @@ public class Application extends JFrame {
     }
 
     private void init() {
-
         setTitle(Config.get("title"));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         pack();
@@ -50,7 +46,6 @@ public class Application extends JFrame {
         Notifications.getInstance().setJFrame(this);
     }
 
-    // show form
     public static void showForm(Component component) {
         component.applyComponentOrientation(app.getComponentOrientation());
         app.mainForm.showForm(component);
@@ -90,8 +85,11 @@ public class Application extends JFrame {
         return app;
     }
 
-    private void initComponents() {
+    public static void restartUI() {
+        SwingUtilities.updateComponentTreeUI(app);
+    }
 
+    private void initComponents() {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -109,29 +107,37 @@ public class Application extends JFrame {
     }
 
     static void main(String[] args) {
+        try {
+            HibernateUtil.getSessionFactory();
+        } catch (Exception e) {
+            System.err.println("Hibernate initialization failed: " + e.getMessage());
+        }
+
         FlatJetBrainsMonoFont.install();
         FlatLaf.registerCustomDefaultsSource("minhcreator.themes");
-//        javax.swing.UIManager.put(
-//                "defaultFont",
-//                new Font(FlatJetBrainsMonoFont.FAMILY,
-//                        Font.PLAIN, 13
-//                )
-//        );
 
         FontManager.LoadFont("defaultFont", FlatJetBrainsMonoFont.FAMILY, Font.PLAIN, 13);
-        FlatMacLightLaf.setup();
-        //FlatLightLaf.setup();
-//        EventQueue.invokeLater(() -> {
-//            app = new Application();
-//            app.setVisible(true);
-//        });
+
+        String savedTheme = loadSavedTheme();
+        ThemeManager.applyTheme(savedTheme);
+
+        AppLogger.info("Application", "Starting with theme: " + savedTheme);
 
         java.awt.EventQueue.invokeLater(() -> {
             app = new Application();
-//            app.applyComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
             app.setVisible(true);
         });
 
+        Runtime.getRuntime().addShutdownHook(new Thread(HibernateUtil::shutdown));
+    }
+
+    public static String loadSavedTheme() {
+        var config = global.Config("/minhcreator/config", "appConfig.properties");
+        String theme = config.get("theme");
+        if (theme == null || theme.isBlank()) {
+            theme = ThemeManager.THEME_MATERIAL_LIGHT;
+        }
+        return theme;
     }
 
     private final Dictionary<String, String> Config;

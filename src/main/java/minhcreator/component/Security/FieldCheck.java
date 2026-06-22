@@ -13,10 +13,10 @@ import java.util.regex.Pattern;
 public class FieldCheck {
 
     // regex email checking
-    private String regex = "^\\w+[A-Za-z8-9+_.-]+@[A-Za-z8-9.-]+$";
+    private String regex = "^\\w+[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
 
     // regex username checking
-    private String regexU = "^[A-Za-z8-9+_.-]+$";
+    private String regexU = "^[A-Za-z0-9+_.-]+$";
 
     // create app instanced
     private Application app = Application.getInstance();

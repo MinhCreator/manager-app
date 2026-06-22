@@ -1,321 +1,285 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
- */
 package minhcreator.component.ModularPanel;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import minhcreator.component.RoundPanel;
+import minhcreator.component.Card;
+import minhcreator.component.Refreshable;
 import minhcreator.component.model.ModelCard;
 import minhcreator.component.page.Login;
-import minhcreator.functional.database.DB;
+import minhcreator.component.stock.StockStatus;
+import minhcreator.entity.InventoryEntity;
+import minhcreator.entity.InvoiceEntity;
+import minhcreator.entity.ProductEntity;
+import minhcreator.functional.database.dao.InventoryDAO;
+import minhcreator.functional.database.dao.InvoiceDAO;
+import minhcreator.functional.database.dao.ProductDAO;
+import minhcreator.functional.database.dao.PurchaseOrderDAO;
 import minhcreator.functional.session.sessionManager;
+import minhcreator.util.AppLogger;
+import minhcreator.util.UIRefreshScheduler;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.*;
-import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Vector;
 
-/**
- * @author Designed by Raven
- * @author MinhCreatorVN
- */
-public class DashPanel extends javax.swing.JPanel {
+public class DashPanel extends JPanel implements Refreshable {
 
-    private Connection conn;
-    private Statement stmt;
     public sessionManager sharedSession = Login.session;
+    private final int userId;
+    private JPanel contentWrapper;
 
-
-    /**
-     * Creates new form DashPanel
-     */
     public DashPanel() {
-        initComponents();
-        init();
+        this.userId = Login.session.getUserId();
+        setLayout(new BorderLayout());
+        contentWrapper = new JPanel();
+        add(contentWrapper, BorderLayout.CENTER);
+        buildContent();
+        UIRefreshScheduler.getInstance().register(this);
+        AppLogger.info("Dashboard", "Dashboard loaded — auto-refresh enabled");
     }
 
-    private void initComponents() {
-
-        StaticPanel = new javax.swing.JPanel();
-        ProfitCard = new minhcreator.component.Card();
-        TotalStock = new minhcreator.component.Card();
-        Expense = new minhcreator.component.Card();
-        welcomeUserCard = new minhcreator.component.Card();
-        RoundTable = new RoundPanel();
-        TableScrollPanel = new javax.swing.JScrollPane();
-        table = new javax.swing.JTable();
-        LatestStockAddButton = new javax.swing.JButton();
-
-        setPreferredSize(new java.awt.Dimension(600, 700));
-
-        javax.swing.GroupLayout StaticPanelLayout = new javax.swing.GroupLayout(StaticPanel);
-        StaticPanel.setLayout(StaticPanelLayout);
-        StaticPanelLayout.setHorizontalGroup(
-                StaticPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(StaticPanelLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(ProfitCard, javax.swing.GroupLayout.PREFERRED_SIZE, 235, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(TotalStock, javax.swing.GroupLayout.PREFERRED_SIZE, 235, javax.swing.GroupLayout.PREFERRED_SIZE)
-//                                .addGap(18, 18, 18)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(Expense, javax.swing.GroupLayout.PREFERRED_SIZE, 255, javax.swing.GroupLayout.PREFERRED_SIZE)
-//                                .addGap(18, 18, 18)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(welcomeUserCard, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
-        StaticPanelLayout.setVerticalGroup(
-                StaticPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(StaticPanelLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(StaticPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(welcomeUserCard, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(Expense, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(TotalStock, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(ProfitCard, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        TableScrollPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
-
-        table.setModel(new javax.swing.table.DefaultTableModel(
-                new Object[][]{
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null},
-                        {null, null, null, null}
-                },
-                new String[]{
-                        "Title 1", "Title 2", "Title 3", "Title 4"
-                }
-        ));
-        TableScrollPanel.setViewportView(table);
-
-        LatestStockAddButton.setText("New stock added");
-        LatestStockAddButton.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        LatestStockAddButton.putClientProperty(FlatClientProperties.STYLE_CLASS, "primary");
-
-        javax.swing.GroupLayout RoundTableLayout = new javax.swing.GroupLayout(RoundTable);
-        RoundTable.setLayout(RoundTableLayout);
-        RoundTableLayout.setHorizontalGroup(
-                RoundTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(RoundTableLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(RoundTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(TableScrollPanel)
-                                        .addGroup(RoundTableLayout.createSequentialGroup()
-                                                .addComponent(LatestStockAddButton)
-                                                .addGap(0, 0, Short.MAX_VALUE)))
-                                .addContainerGap())
-        );
-        RoundTableLayout.setVerticalGroup(
-                RoundTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, RoundTableLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(LatestStockAddButton, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(TableScrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 541, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap())
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(RoundTable, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(StaticPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addComponent(StaticPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(RoundTable, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
+    @Override
+    public void refreshData() {
+        AppLogger.debug("Dashboard", "Auto-refreshing dashboard data");
+        buildContent();
     }
 
-    private void init() {
-        welcomeUserCard.setDataNoIcon(new ModelCard("Welcome Back", sharedSession.getUsername()));
-        welcomeUserCard.setGradientColor(Color.decode("#00ffcc"));
+    @Override
+    public int getRefreshIntervalMs() {
+        return 8000;
+    }
 
-        // init import stock table
-        DefaultTableCellRenderer render = new DefaultTableCellRenderer();
-        render.setHorizontalAlignment(SwingConstants.CENTER);
-        table.setDefaultRenderer(Object.class, render);
-        loadTableData();
+    private void buildContent() {
+        contentWrapper.removeAll();
+        contentWrapper.setLayout(new MigLayout("insets 12, gap 10, fillx, filly", "[grow]", "[]10[grow]"));
+        contentWrapper.add(createCardsRow(), "growx, wrap");
+        contentWrapper.add(createBottomSplit(), "grow, push");
+        contentWrapper.revalidate();
+        contentWrapper.repaint();
+    }
 
-        // trying get profit, total current stock and cost
+    // ─── Top Row: 4 Metric Cards ────────────────────────────────────
+
+    private JPanel createCardsRow() {
+        JPanel row = new JPanel(new MigLayout("gap 10, fillx", "[25%][25%][25%][25%]", "[]"));
+
+        row.add(buildWelcomeCard(), "growx, h 110!");
+        row.add(buildMetricCard("Profit", getProfit(), "$", "profit.svg", new Color(103, 80, 164)), "growx, h 110!");
+        row.add(buildMetricCard("Total Stock", getCurrStorage(), "", "stock.svg", new Color(30, 142, 62)), "growx, h 110!");
+        row.add(buildMetricCard("Expenses", getCost(), "$", "expense.svg", new Color(179, 38, 30)), "growx, h 110!");
+
+        return row;
+    }
+
+    private Card buildWelcomeCard() {
+        Card card = new Card();
+        card.setData(new ModelCard("Welcome Back", sharedSession.getUsername()));
+        card.setAccentColor(new Color(0, 170, 120));
         try {
-            ProfitCard.setDataSvg(new ModelCard("Profit", getProfit(), new FlatSVGIcon("minhcreator/assets/functional_icon/profit.svg")));
-            TotalStock.setDataSvg(new ModelCard("Current storage", getCurrStorage(), new FlatSVGIcon("minhcreator/assets/functional_icon/stock.svg")));
-            Expense.setDataSvg(new ModelCard("Expense", getCost(), new FlatSVGIcon("minhcreator/assets/functional_icon/expense.svg")));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        ProfitCard.setGradientColor(Color.decode("#fff200"));
-        TotalStock.setGradientColor(Color.decode("#4c00ff"));
-        Expense.setGradientColor(Color.decode("#fff870"));
-
-
+            card.setIcon(new FlatSVGIcon("minhcreator/assets/functional_icon/PeopleFilled.svg", 0.6f));
+        } catch (Exception ignored) {}
+        return card;
     }
 
-
-    private void loadTableData() {
-        loadTableData("SELECT * FROM " + sharedSession.getUser_cost_table() + " ORDER BY date DESC");
-    }
-
-    private void loadTableData(String sql) {
+    private Card buildMetricCard(String title, double value, String prefix, String svg, Color accent) {
+        Card card = new Card();
+        card.setData(new ModelCard(title, value));
+        card.setAccentColor(accent);
         try {
-            conn = DB.getConnection();
-            stmt = conn.createStatement();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error loading data: " + e.getMessage());
-            return;
-        }
-
-        if (stmt == null) return;
-        try (ResultSet rs = stmt.executeQuery(sql)) {
-            DefaultTableModel model = buildTableModel(rs);
-            table.setModel(model);
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error loading data: " + ex.getMessage());
-        }
+            card.setIcon(new FlatSVGIcon("minhcreator/assets/functional_icon/" + svg, 0.6f));
+        } catch (Exception ignored) {}
+        return card;
     }
 
-    private DefaultTableModel buildTableModel(ResultSet rs) throws SQLException {
-        ResultSetMetaData meta = rs.getMetaData();
-        int columnCount = meta.getColumnCount();
+    // ─── Bottom Split: Table + Alerts ───────────────────────────────
 
-        Vector<String> columnNames = new Vector<>();
-        for (int model_Label = 1; model_Label <= columnCount; model_Label++)
-            columnNames.add(meta.getColumnLabel(model_Label));
+    private JPanel createBottomSplit() {
+        JPanel split = new JPanel(new MigLayout("gap 10, fillx, filly", "[70%][30%]", "[grow]"));
+        split.add(createInvoiceTablePanel(), "grow, push, h 300!");
+        split.add(createLowStockPanel(), "grow, h 300!");
+        return split;
+    }
 
-        Vector<Vector<Object>> data = new Vector<>();
-        while (rs.next()) {
-            Vector<Object> row = new Vector<>();
-            for (int DataModel = 1; DataModel <= columnCount; DataModel++) row.add(rs.getObject(DataModel));
-            data.add(row);
-        }
-        return new DefaultTableModel(data, columnNames) {
-            @Override
-            public boolean isCellEditable(int row, int col) {
-                return false;
-            }
+    // ─── Left: Recent Invoices Table ─────────────────────────────────
+
+    private JPanel createInvoiceTablePanel() {
+        JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.putClientProperty(FlatClientProperties.STYLE, "arc:16;border:1,1,1,1,$Component.borderColor,,16");
+
+        JLabel header = new JLabel("  Recent Invoices");
+        header.putClientProperty(FlatClientProperties.STYLE, "font:bold +2");
+        panel.add(header, BorderLayout.NORTH);
+
+        String[] cols = {"ID", "Customer", "Total", "Date"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-    }
 
-    // Tính lợi nhuận: Doanh thu - Giá vốn trung bình
-    private ResultSet getProfitReport(String user_product, String user_purchase, String user_invoices_details) throws Exception {
-        Connection conn = DB.getConnection();
-        String revenue_cost = "SELECT p.name, " +
-                "SUM(so.quantity * so.unit_price) AS revenue, " +
-                "SUM(so.quantity * (SELECT IFNULL(SUM(import_price * quantity)/SUM(quantity), 0) " +
-                "FROM " + user_purchase + " WHERE product_id = p.id)) AS cost " +
-                "FROM " + user_product + " p JOIN " + user_invoices_details + " so ON p.id = so.product_id GROUP BY p.id";
+        InvoiceDAO invDAO = new InvoiceDAO();
+        List<InvoiceEntity> invoices = invDAO.findByUserId(userId);
+        int displayCount = Math.min(invoices.size(), 20);
 
-
-        return conn.prepareStatement(revenue_cost).executeQuery();
-    }
-
-    // cal profit
-    private double getProfit() throws Exception {
-        List<Double> revenueList = new ArrayList<>();
-        List<Double> costList = new ArrayList<>();
-        ResultSet rs = getProfitReport(
-                sharedSession.getUser_product(),
-                sharedSession.getUser_cost_table(),
-                sharedSession.getUser_invoice_details()
-        );
-
-        try {
-            while (rs.next()) {
-                String productName = rs.getString("name");
-                double revenue = rs.getDouble("revenue");
-                double cost = rs.getDouble("cost");
-                revenueList.add(revenue);
-                costList.add(cost);
-            }
-
-            // Using Java 8+ Stream API
-            double TotalRevenue = revenueList.stream().mapToDouble(Double::doubleValue).sum();
-            double TotalCost = costList.stream().mapToDouble(Double::doubleValue).sum();
-            return TotalRevenue - TotalCost;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return 0.0;
-        } finally {
-            // Always close the ResultSet when done
-            try {
-                if (rs != null) rs.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    // cal cost your spend
-    private double getCost() throws Exception {
-        List<Double> costList = new ArrayList<>();
-        ResultSet rs = getProfitReport(
-                sharedSession.getUser_product(),
-                sharedSession.getUser_cost_table(),
-                sharedSession.getUser_invoice_details()
-        );
-
-        try {
-            while (rs.next()) {
-                double cost = rs.getDouble("cost");
-                costList.add(cost);
-            }
-            return costList.stream().mapToDouble(Double::doubleValue).sum();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return 0.0;
-        } finally {
-            // Always close the ResultSet when done
-            try {
-                if (rs != null) rs.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    // get total quantity of product in current storage
-    private int getCurrStorage() throws Exception {
-        Connection conn = DB.getConnection();
-        String currentStorage = "SELECT " + " quantity " + "FROM " + sharedSession.getYour_inventory();
-        ResultSet rs = conn.prepareStatement(currentStorage).executeQuery();
-        List<Integer> qty = new ArrayList<>();
-        while (rs.next()) {
-            qty.add(rs.getInt("quantity"));
+        for (int i = 0; i < displayCount; i++) {
+            InvoiceEntity inv = invoices.get(i);
+            String date = inv.getCreatedAt() != null
+                    ? inv.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                    : "";
+            model.addRow(new Object[]{
+                    inv.getInvoiceId(),
+                    inv.getCustomerName() != null ? inv.getCustomerName() : "-",
+                    String.format("$%,.0f", inv.getTotalAmount()),
+                    date
+            });
         }
 
-        return qty.stream().mapToInt(Integer::intValue).sum();
+        JTable table = new JTable(model);
+        table.setRowHeight(32);
+        table.setShowGrid(false);
+        table.setIntercellSpacing(new Dimension(0, 2));
+        table.getColumnModel().getColumn(0).setPreferredWidth(40);
+        table.getColumnModel().getColumn(1).setPreferredWidth(120);
+        table.getColumnModel().getColumn(2).setPreferredWidth(80);
+        table.getColumnModel().getColumn(3).setPreferredWidth(90);
+
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+        table.getColumnModel().getColumn(0).setCellRenderer(center);
+        table.getColumnModel().getColumn(3).setCellRenderer(center);
+
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.setBorder(null);
+        scroll.getViewport().setOpaque(false);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        double totalInvoiceAmount = invoices.stream().mapToDouble(InvoiceEntity::getTotalAmount).sum();
+        JLabel summary = new JLabel(String.format("  Total: $%,.0f across %d invoices", totalInvoiceAmount, invoices.size()));
+        summary.putClientProperty(FlatClientProperties.STYLE, "font:-1");
+        summary.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
+        panel.add(summary, BorderLayout.SOUTH);
+
+        return panel;
     }
 
-    private minhcreator.component.Card Expense;
-    private minhcreator.component.Card ProfitCard;
-    private RoundPanel RoundTable;
-    private javax.swing.JPanel StaticPanel;
-    private javax.swing.JScrollPane TableScrollPanel;
-    private minhcreator.component.Card TotalStock;
-    private javax.swing.JButton LatestStockAddButton;
-    private javax.swing.JTable table;
-    private minhcreator.component.Card welcomeUserCard;
+    // ─── Right: Low Stock Alerts ─────────────────────────────────────
+
+    private JPanel createLowStockPanel() {
+        JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.putClientProperty(FlatClientProperties.STYLE, "arc:16;border:1,1,1,1,$Component.borderColor,,16");
+
+        JLabel header = new JLabel("  Stock Alerts");
+        header.putClientProperty(FlatClientProperties.STYLE, "font:bold +2");
+        panel.add(header, BorderLayout.NORTH);
+
+        ProductDAO prodDAO = new ProductDAO();
+        InventoryDAO invDAO = new InventoryDAO();
+        List<ProductEntity> products = prodDAO.findByUserId(userId);
+        List<InventoryEntity> invList = invDAO.findByUserId(userId);
+
+        String[] cols = {"Product", "Qty", "Status"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+
+        int threshold = 10;
+        int lowCount = 0;
+        int outCount = 0;
+
+        for (ProductEntity p : products) {
+            InventoryEntity inv = invList.stream()
+                    .filter(i -> i.getProductId() == p.getId())
+                    .findFirst().orElse(null);
+            int qty = inv != null ? inv.getQuantity() : 0;
+
+            StockStatus status = StockStatus.getStatusBage(qty, threshold);
+            if (status != StockStatus.AVAIlABLE) {
+                model.addRow(new Object[]{p.getName(), qty, status});
+                if (qty == 0) outCount++;
+                else lowCount++;
+            }
+        }
+
+        if (model.getRowCount() == 0) {
+            JLabel emptyLabel = new JLabel("  ✓ All products well-stocked", SwingConstants.CENTER);
+            emptyLabel.setForeground(new Color(30, 142, 62));
+            emptyLabel.putClientProperty(FlatClientProperties.STYLE, "font:+1");
+            panel.add(emptyLabel, BorderLayout.CENTER);
+        } else {
+            JTable table = new JTable(model);
+            table.setRowHeight(30);
+            table.setShowGrid(false);
+            table.getColumnModel().getColumn(2).setPreferredWidth(50);
+
+            table.getColumnModel().getColumn(2).setCellRenderer(
+                    new DefaultTableCellRenderer() {
+                        @Override
+                        public Component getTableCellRendererComponent(JTable t, Object v,
+                                boolean s, boolean f, int r, int c) {
+                            Component comp = super.getTableCellRendererComponent(t, v, s, f, r, c);
+                            if (v instanceof StockStatus status) {
+                                setForeground(status.getColor());
+                                setText(status.getText().trim());
+                            }
+                            return comp;
+                        }
+                    }
+            );
+
+            JScrollPane scroll = new JScrollPane(table);
+            scroll.setBorder(null);
+            scroll.getViewport().setOpaque(false);
+            panel.add(scroll, BorderLayout.CENTER);
+        }
+
+        String alertMsg;
+        Color alertColor;
+        if (outCount > 0 && lowCount > 0) {
+            alertMsg = String.format("⚠ %d out of stock, %d low", outCount, lowCount);
+            alertColor = new Color(230, 57, 70);
+        } else if (outCount > 0) {
+            alertMsg = String.format("⚠ %d product(s) out of stock", outCount);
+            alertColor = new Color(230, 57, 70);
+        } else if (lowCount > 0) {
+            alertMsg = String.format("⚠ %d product(s) low on stock", lowCount);
+            alertColor = new Color(240, 150, 30);
+        } else {
+            alertMsg = "✓ All products well-stocked";
+            alertColor = new Color(30, 142, 62);
+        }
+
+        JLabel footer = new JLabel("  " + alertMsg);
+        footer.setForeground(alertColor);
+        footer.putClientProperty(FlatClientProperties.STYLE, "font:-1");
+        footer.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
+        panel.add(footer, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    // ─── Data Methods ────────────────────────────────────────────────
+
+    private double getProfit() {
+        InvoiceDAO invDAO = new InvoiceDAO();
+        PurchaseOrderDAO poDAO = new PurchaseOrderDAO();
+        List<Object[]> income = invDAO.getIncomeByCategory(userId);
+        List<Object[]> cost = poDAO.getCostByCategory(userId);
+        double rev = income.stream().mapToDouble(r -> r[1] != null ? (double) r[1] : 0).sum();
+        double exp = cost.stream().mapToDouble(r -> r[1] != null ? (double) r[1] : 0).sum();
+        return rev - exp;
+    }
+
+    private double getCost() {
+        PurchaseOrderDAO poDAO = new PurchaseOrderDAO();
+        List<Object[]> cost = poDAO.getCostByCategory(userId);
+        return cost.stream().mapToDouble(r -> r[1] != null ? (double) r[1] : 0).sum();
+    }
+
+    private int getCurrStorage() {
+        InventoryDAO invDAO = new InventoryDAO();
+        return invDAO.findByUserId(userId).stream()
+                .mapToInt(InventoryEntity::getQuantity).sum();
+    }
 }

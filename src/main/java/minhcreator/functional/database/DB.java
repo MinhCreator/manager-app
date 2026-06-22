@@ -1,11 +1,13 @@
 package minhcreator.functional.database;
 
-import raven.toast.Notifications;
-
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.*;
+import java.util.Properties;
 
 /**
- * DB class is used to connect to the database and perform database operations.
+ * Legacy JDBC connection manager. Credentials are loaded from
+ * appConfig.properties at runtime, falling back to defaults.
  *
  * @author MinhCreatorVN
  */
@@ -14,15 +16,30 @@ public class DB {
     private static DB instance;
     public Statement stmt;
     public PreparedStatement pstmt;
-    private static final String DB_URL = "jdbc:mysql://localhost/warehouse";
-    private static final String USER = "root";
-    private static final String PASSWORD = "";
 
-    /**
-     * Returns the singleton instance of the DB class.
-     *
-     * @return the singleton instance of the DB class
-     */
+    private static String DB_URL = "jdbc:mysql://localhost/warehouse";
+    private static String USER = "root";
+    private static String PASSWORD = "";
+
+    static {
+        loadDbConfig();
+    }
+
+    private static void loadDbConfig() {
+        Properties props = new Properties();
+        try (InputStream is = DB.class.getResourceAsStream(
+                "/minhcreator/config/appConfig.properties")) {
+            if (is != null) {
+                props.load(is);
+                DB_URL = props.getProperty("db.url", DB_URL);
+                USER = props.getProperty("db.user", USER);
+                PASSWORD = props.getProperty("db.password", PASSWORD);
+            }
+        } catch (IOException e) {
+            System.err.println("Warning: could not load appConfig.properties: " + e.getMessage());
+        }
+    }
+
     public static synchronized DB getInstance() {
         if (instance == null) {
             instance = new DB();
@@ -30,26 +47,12 @@ public class DB {
         return instance;
     }
 
-    /**
-     * Initializes the database connection.
-     *
-     * @throws SQLException if the connection fails
-     */
     private synchronized static void initializeConnection() throws SQLException {
         if (conn == null || conn.isClosed()) {
             conn = DriverManager.getConnection(DB_URL, USER, PASSWORD);
-//            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Connection successful");
-        } else {
-            Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, "Connection failed");
         }
     }
 
-    /**
-     * Returns a connection to the database. If the connection is already open or null, it initializes a new connection.
-     *
-     * @return a connection to the database
-     * @throws SQLException if the connection fails
-     */
     public synchronized static Connection getConnection() throws SQLException {
         if (conn == null || conn.isClosed()) {
             initializeConnection();
@@ -57,7 +60,6 @@ public class DB {
         return conn;
     }
 
-    // Insert, Update, Delete
     public int executionSQL(String query) {
         Connection connection = null;
         Statement stmt = null;
@@ -73,7 +75,6 @@ public class DB {
         }
     }
 
-    // Select
     public ResultSet selectSQL(String query) {
         Connection connection = null;
         Statement stmt = null;
@@ -81,10 +82,8 @@ public class DB {
             connection = getConnection();
             stmt = connection.createStatement();
             return stmt.executeQuery(query);
-            // Note: The caller is responsible for closing the ResultSet
         } catch (SQLException e) {
             e.printStackTrace();
-            Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER, e.getMessage());
             return null;
         }
     }
@@ -93,14 +92,11 @@ public class DB {
         try {
             if (rs != null) rs.close();
             if (stmt != null) stmt.close();
-            // Don't close the connection here if you want to reuse it
-            // if (conn != null) conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    // Call this when your application shuts down
     public static void closeConnection() {
         try {
             if (conn != null && !conn.isClosed()) {
@@ -109,10 +105,5 @@ public class DB {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    // test
-    public static void main(String[] args) {
-
     }
 }

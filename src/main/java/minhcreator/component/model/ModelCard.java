@@ -68,6 +68,11 @@ public class ModelCard {
         this.UserName = userName;
     }
 
+    public ModelCard(String title, double values) {
+        this.title = title;
+        this.values = values;
+    }
+
     public ModelCard() {
     }
 

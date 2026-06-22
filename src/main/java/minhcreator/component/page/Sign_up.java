@@ -1,18 +1,19 @@
 package minhcreator.component.page;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.formdev.flatlaf.FlatClientProperties;
 import minhcreator.component.PasswordStrengthStatus;
-import minhcreator.functional.database.DB;
+import minhcreator.entity.UserEntity;
+import minhcreator.functional.database.dao.UserDAO;
 import minhcreator.functional.database.TableInitializer;
 import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
+import minhcreator.util.AppLogger;
 import net.miginfocom.swing.MigLayout;
 import raven.toast.Notifications;
 
 import javax.swing.*;
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -233,45 +234,28 @@ public class Sign_up extends JPanel {
         String username = txtUsername.getText().trim();
         String email = txtEmail.getText().trim();
         String password = new String(txtPassword.getPassword());
-        System.out.println(username + " " + email + " " + password);
+        String hashed = BCrypt.withDefaults().hashToString(12, password.toCharArray());
+        System.out.println(username + " " + email + " [password hashed with BCrypt]");
 
-        String sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
-        try (Connection conn = new DB().getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            if (conn == null) return;
-            ps.setString(1, username);
-            ps.setString(2, email);
-            ps.setString(3, password);
-            ps.executeUpdate();
-            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Sign up successful");
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
+        UserDAO userDAO = new UserDAO();
+        UserEntity user = new UserEntity(username, email, hashed);
+        userDAO.save(user);
+        AppLogger.info("SignUp", "New user registered: " + username);
+        Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Sign up successful");
     }
 
     public String getUserName() {
-        String username = txtUsername.getText().trim();
-        String email = txtEmail.getText().trim();
-        String sql = "SELECT username FROM users WHERE email = ?";
-        String sql2 = "SELECT username FROM users WHERE username = ?";
-        try (Connection conn = new DB().getConnection()) {
-            if (emailCheck(username)) {
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ps.setString(1, username);
-
-                return ps.executeQuery().toString();
-            } else if (usernameCheck(username)) {
-                PreparedStatement ps = conn.prepareStatement(sql2);
-                ps.setString(1, username);
-                return ps.executeQuery().toString();
-            } else {
-                return null;
-            }
-
-        } catch (Exception e) {
-            // TODO: handle exception
+        String input = txtUsername.getText().trim();
+        UserDAO userDAO = new UserDAO();
+        UserEntity user;
+        if (emailCheck(input)) {
+            user = userDAO.findByEmail(input);
+        } else if (usernameCheck(input)) {
+            user = userDAO.findByUsername(input);
+        } else {
             return null;
         }
-
+        return user != null ? user.getUsername() : null;
     }
 
 }

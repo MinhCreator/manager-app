@@ -18,21 +18,14 @@ import java.util.List;
  */
 public class Menu extends JPanel {
     private final String menuItems[][] = {
-//            {""},
             {"Dashboard"},
-//        {"~Warehouse Management~"},
-//        {"Inventory", "Inbox", "Read", "Compost"},
             {"Inventory"},
             {"Analytics"},
             {"Invoice"},
             {"Settings"},
-//        {"~COMPONENT~"},
-//        {"Advanced UI", "Cropper", "Owl Carousel", "Sweet Alert"},
-//        {"Forms", "Basic Elements", "Advanced Elements", "Editors", "Wizard"},
-//        {"~OTHER~"},
-//        {"Charts", "Apex", "Flot", "Peity", "Sparkline"},
-//        {"Icons", "Feather Icons", "Flag Icons", "Mdi Icons"},
-//        {"Special Pages", "Blank page", "Faq", "Invoice", "Profile", "Pricing", "Timeline"},
+            {"~System~"},
+            {"Log Viewer"},
+            {"Configuration"},
     };
 
     public boolean isMenuFull() {

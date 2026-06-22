@@ -1,58 +1,79 @@
-CREATE DATABASE warehouse;
+-- Hibernate-based unified schema for Warehouse Management System
+-- Tables are auto-created by Hibernate (hbm2ddl.auto=update)
+-- This file serves as reference documentation.
 
-
-CREATE TABLE products (
+-- Users table (shared)
+CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    UPID VARCHAR(50) UNIQUE, -- unique product id
-    name VARCHAR(255)
+    username VARCHAR(255),
+    email VARCHAR(255),
+    password VARCHAR(255)
 );
 
-CREATE TABLE inventory (
-    product_id INT PRIMARY KEY,
-    UPID VARCHAR(255) UNIQUE,
-    category VARCHAR(255),
-    price DOUBLE,
-    selling_price DOUBLE,
-    quantity INT DEFAULT 0,
-    FOREIGN KEY (product_id) REFERENCES products(id),
-    FOREIGN KEY (UPID) REFERENCES products(UPID)
+-- Products table (unified with user_id)
+CREATE TABLE IF NOT EXISTS products (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    UPID VARCHAR(50),
+    name VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Lưu chi phí (Cost)
-CREATE TABLE purchase_orders (
+-- Performance indexes
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_products_user_id ON products(user_id);
+CREATE INDEX idx_inventory_user_id ON inventory(user_id);
+CREATE INDEX idx_purchase_orders_user_id ON purchase_orders(user_id);
+CREATE INDEX idx_sales_orders_user_id ON sales_orders(user_id);
+CREATE INDEX idx_invoices_user_id ON invoices(user_id);
+CREATE INDEX idx_invoice_details_invoice_id ON invoice_details(invoice_id);
+CREATE INDEX idx_invoice_details_user_id ON invoice_details(user_id);
+
+
+-- Purchase orders (unified with user_id)
+CREATE TABLE IF NOT EXISTS purchase_orders (
     id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
     product_id INT,
     quantity INT,
     import_price DOUBLE,
     date DATE,
-    FOREIGN KEY (product_id) REFERENCES products(id)
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Lưu doanh thu (Revenue)
-CREATE TABLE sales_orders (
+-- Sales orders (unified with user_id)
+CREATE TABLE IF NOT EXISTS sales_orders (
     id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
     product_id INT,
     quantity INT,
     selling_price DOUBLE,
     date DATE,
-    FOREIGN KEY (product_id) REFERENCES products(id)
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Bảng chính của Hóa đơn
-CREATE TABLE invoices (
+-- Invoices (unified with user_id)
+CREATE TABLE IF NOT EXISTS invoices (
     invoice_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
     customer_name VARCHAR(255),
     total_amount DOUBLE,
-    created_at DATE
+    created_at DATE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Chi tiết từng dòng trong hóa đơn
-CREATE TABLE invoice_details (
+-- Invoice details (unified with user_id)
+CREATE TABLE IF NOT EXISTS invoice_details (
     detail_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
     invoice_id INT,
     product_id INT,
     quantity INT,
-    unit_price DOUBLE, -- Giá bán thực tế lúc đó (đã trừ chiết khấu nếu có)
-    FOREIGN KEY (invoice_id) REFERENCES invoices(invoice_id),
-    FOREIGN KEY (product_id) REFERENCES products(id)
+    unit_price DOUBLE,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(invoice_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

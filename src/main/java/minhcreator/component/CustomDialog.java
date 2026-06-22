@@ -158,11 +158,11 @@ public class CustomDialog extends javax.swing.JDialog {
         pack();
     }
 
-    private static String message;
-    private static String Header;
-    private static String iconic_path;
-    private static String buttonText;
-    private static JFrame parent;
+    private String message;
+    private String Header;
+    private String iconic_path;
+    private String buttonText;
+    private JFrame parent;
     private int width;
     private int height;
 }

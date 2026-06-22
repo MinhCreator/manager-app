@@ -1,31 +1,30 @@
 package minhcreator.component.page;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.formdev.flatlaf.FlatClientProperties;
-import minhcreator.functional.database.DB;
+import com.formdev.flatlaf.FlatLaf;
+import minhcreator.entity.UserEntity;
 import minhcreator.functional.database.TableInitializer;
+import minhcreator.functional.database.dao.UserDAO;
 import minhcreator.functional.session.sessionManager;
 import minhcreator.main.Application;
+import minhcreator.util.AppLogger;
+import minhcreator.util.ThemeManager;
 import net.miginfocom.swing.MigLayout;
 import raven.toast.Notifications;
 
 import javax.swing.*;
 import java.awt.*;
-import java.sql.*;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Properties;
 
-/**
- * settings class is used to create a custom settings window.
- *
- * @author MinhCreatorVN
- */
 public class settings extends JPanel {
-    private JPanel settingPanel;
-    private JButton log_OutButt, UpdateBut, delMyAcc;
-    private JLabel Email_Lb, Username_Lb, Password_Lb;
-    private JTextField Email_Tf, Username_Tf;
-    private JPasswordField Password_Tf;
-    private Connection conn;
+    private JTabbedPane tabbedPane;
     public sessionManager session_SignUp = Sign_up.session;
     public sessionManager session_Login = Login.session;
+    private Properties appProps;
 
     public settings() {
         init();
@@ -35,158 +34,237 @@ public class settings extends JPanel {
     private void init() {
         setVisible(true);
         setLayout(new BorderLayout());
+        appProps = new Properties();
+        try (InputStream is = getClass().getResourceAsStream("/minhcreator/config/appConfig.properties")) {
+            if (is != null) appProps.load(is);
+        } catch (Exception e) {
+            AppLogger.error("Settings", "Failed to load config: " + e.getMessage());
+        }
     }
 
     private void initComponent() {
-        add(settingPanel());
+        tabbedPane = new JTabbedPane();
+        tabbedPane.putClientProperty(FlatClientProperties.STYLE, "tabType:underlined;tabAreaAlignment:fill");
+
+        tabbedPane.addTab("Account", createAccountPanel());
+        tabbedPane.addTab("Appearance", createAppearancePanel());
+        tabbedPane.addTab("System", createSystemPanel());
+
+        add(tabbedPane, BorderLayout.CENTER);
     }
 
-    private JPanel settingPanel() {
-        settingPanel = new JPanel();
-        settingPanel.setLayout(new MigLayout("wrap, fillx, insets 35 45 30 45", "[fill,360]", "[center]"));
+    // ─── Tab 1: Account ─────────────────────────────────────────────
 
-        Email_Lb = new JLabel("Email");
-        Email_Tf = new JTextField();
-        Email_Tf.setText(session_Login.getEmail());
+    private JPanel createAccountPanel() {
+        JPanel panel = new JPanel(new MigLayout("wrap 2, fillx, insets 30 45 30 45", "[right][grow,300]"));
 
-        Username_Lb = new JLabel("Username");
-        Username_Tf = new JTextField();
-        Username_Tf.setText(session_Login.getUsername());
+        JLabel header = new JLabel("Account Settings");
+        header.putClientProperty(FlatClientProperties.STYLE, "font:bold +5");
+        panel.add(header, "span 2, gapbottom 15");
 
-        Password_Lb = new JLabel("Password");
-        Password_Tf = new JPasswordField();
-        Password_Tf.setText(session_Login.getPassword());
-        Password_Tf.putClientProperty(FlatClientProperties.STYLE, "" +
-                "showRevealButton:true"
-        );
+        JLabel emailLb = new JLabel("Email");
+        JTextField emailTf = new JTextField(session_Login.getEmail());
+        panel.add(emailLb);
+        panel.add(emailTf, "growx");
 
-        log_OutButt = new JButton("Log out");
-        log_OutButt.putClientProperty(FlatClientProperties.STYLE_CLASS, "primary");
-        log_OutButt.addActionListener(e -> {
+        JLabel userLb = new JLabel("Username");
+        JTextField userTf = new JTextField(session_Login.getUsername());
+        panel.add(userLb);
+        panel.add(userTf, "growx");
+
+        JLabel passLb = new JLabel("Password");
+        JPasswordField passTf = new JPasswordField(session_Login.getPassword());
+        passTf.putClientProperty(FlatClientProperties.STYLE, "showRevealButton:true");
+        panel.add(passLb);
+        panel.add(passTf, "growx");
+
+        JButton updateBut = new JButton("Update Account");
+        updateBut.putClientProperty(FlatClientProperties.STYLE_CLASS, "success");
+        updateBut.addActionListener(e -> {
+            letUpdate(userTf, emailTf, passTf);
+        });
+        panel.add(updateBut, "span 2, gaptop 10, align center");
+
+        return panel;
+    }
+
+    // ─── Tab 2: Appearance ───────────────────────────────────────────
+
+    private JPanel createAppearancePanel() {
+        JPanel panel = new JPanel(new MigLayout("wrap 2, fillx, insets 30 45 30 45", "[right][grow,300]"));
+
+        JLabel header = new JLabel("Appearance");
+        header.putClientProperty(FlatClientProperties.STYLE, "font:bold +5");
+        panel.add(header, "span 2, gapbottom 15");
+
+        // Theme selector
+        JLabel themeLb = new JLabel("Theme");
+        String[] themes = ThemeManager.getAvailableThemes();
+        JComboBox<String> themeCombo = new JComboBox<>();
+        String currentTheme = appProps.getProperty("theme", ThemeManager.THEME_MATERIAL_LIGHT);
+        for (String t : themes) {
+            themeCombo.addItem(ThemeManager.getThemeDisplayName(t));
+            if (t.equals(currentTheme)) {
+                themeCombo.setSelectedItem(ThemeManager.getThemeDisplayName(t));
+            }
+        }
+        themeCombo.addActionListener(e -> {
+            String selected = themeCombo.getSelectedItem().toString();
+            String themeKey = getThemeKey(selected);
+            appProps.setProperty("theme", themeKey);
+            saveConfigProps();
+            ThemeManager.applyTheme(themeKey, Application.getInstance());
+            AppLogger.info("Settings", "Theme changed to " + selected);
+        });
+        panel.add(themeLb);
+        panel.add(themeCombo, "growx");
+
+        // Accent color label
+        JLabel accentLb = new JLabel("Accent Color");
+        JPanel accentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        Color accent = UIManager.getColor("Component.accentColor");
+        JLabel accentPreview = new JLabel("  ");
+        accentPreview.setOpaque(true);
+        accentPreview.setBackground(accent != null ? accent : new Color(103, 80, 164));
+        accentPreview.setPreferredSize(new Dimension(24, 24));
+        JButton resetAccent = new JButton("Reset to Default");
+        resetAccent.addActionListener(e -> {
+            FlatLaf.setGlobalExtraDefaults(null);
+            FlatLaf.updateUI();
+            AppLogger.info("Settings", "Accent color reset to default");
+        });
+        accentPanel.add(accentPreview);
+        accentPanel.add(Box.createHorizontalStrut(8));
+        accentPanel.add(resetAccent);
+        panel.add(accentLb);
+        panel.add(accentPanel, "growx");
+
+        // Font size
+        JLabel fontLb = new JLabel("Font Size");
+        JSpinner fontSpinner = new JSpinner(new SpinnerNumberModel(13, 10, 24, 1));
+        panel.add(fontLb);
+        panel.add(fontSpinner, "growx, w 100");
+
+        // Apply font button
+        JButton applyFont = new JButton("Apply Font Size");
+        applyFont.addActionListener(e -> {
+            int size = (int) fontSpinner.getValue();
+            UIManager.put("defaultFont", new Font(UIManager.getFont("defaultFont").getFamily(), Font.PLAIN, size));
+            FlatLaf.updateUI();
+            AppLogger.info("Settings", "Font size changed to " + size);
+        });
+        panel.add(applyFont, "span 2, gaptop 10, align center");
+
+        return panel;
+    }
+
+    // ─── Tab 3: System ───────────────────────────────────────────────
+
+    private JPanel createSystemPanel() {
+        JPanel panel = new JPanel(new MigLayout("wrap 2, fillx, insets 30 45 30 45", "[right][grow,300]"));
+
+        JLabel header = new JLabel("System");
+        header.putClientProperty(FlatClientProperties.STYLE, "font:bold +5");
+        panel.add(header, "span 2, gapbottom 15");
+
+        JLabel infoLb = new JLabel("Logged in as:");
+        JLabel infoVal = new JLabel(session_Login.getUsername() + " (" + session_Login.getEmail() + ")");
+        infoVal.putClientProperty(FlatClientProperties.STYLE, "font:bold");
+        panel.add(infoLb);
+        panel.add(infoVal, "growx");
+
+        JLabel versionLb = new JLabel("Version");
+        JLabel versionVal = new JLabel("1.0.0");
+        panel.add(versionLb);
+        panel.add(versionVal, "growx");
+
+        JSeparator sep = new JSeparator();
+        panel.add(sep, "span 2, growx, gaptop 10, gapbottom 10");
+
+        JButton logOutBut = new JButton("Log out");
+        logOutBut.putClientProperty(FlatClientProperties.STYLE_CLASS, "primary");
+        logOutBut.addActionListener(e -> {
             letLogOut();
             session_Login.clearSession();
             Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "You have logged out");
         });
-        UpdateBut = new JButton("Update");
-        UpdateBut.putClientProperty(FlatClientProperties.STYLE_CLASS, "success");
-        UpdateBut.addActionListener(e -> {
-            letUpdate();
-            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Your account has been updated");
+        panel.add(logOutBut, "span 2, align center, split 3");
 
-        });
-        delMyAcc = new JButton("Delete me");
-        delMyAcc.addActionListener(e -> {
-
-            int confim = JOptionPane.showConfirmDialog(
+        JButton delBut = new JButton("Delete Account");
+        delBut.putClientProperty(FlatClientProperties.STYLE_CLASS, "danger");
+        delBut.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
                     this,
-                    "Are you sure you want to delete your account ?",
+                    "Are you sure you want to delete your account? All data will be permanently lost.",
                     "Confirm",
                     JOptionPane.YES_NO_OPTION
             );
-            if (confim != JOptionPane.YES_OPTION) {
-                return;
-            }
+            if (confirm != JOptionPane.YES_OPTION) return;
 
             TableInitializer.dropAllTables(session_Login.getUsername());
             deleteMyAccount();
             session_Login.clearSession();
             letLogOut();
-            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Your account has been deleted successfully");
+            Notifications.getInstance().show(Notifications.Type.INFO, Notifications.Location.TOP_CENTER, "Your account has been deleted");
         });
-        delMyAcc.putClientProperty(FlatClientProperties.STYLE_CLASS, "danger");
+        panel.add(delBut);
 
-        settingPanel.add(Email_Lb);
-        settingPanel.add(Email_Tf);
-        settingPanel.add(Username_Lb);
-        settingPanel.add(Username_Tf);
-        settingPanel.add(Password_Lb);
-        settingPanel.add(Password_Tf);
-        settingPanel.add(UpdateBut);
-        settingPanel.add(delMyAcc);
-        settingPanel.add(log_OutButt);
-        return settingPanel;
+        return panel;
     }
+
+    // ─── Actions ────────────────────────────────────────────────────
 
     private void letLogOut() {
         Application.logout();
     }
 
-    private void letUpdate() {
-        try {
-            conn = new DB().getConnection();
-        } catch (SQLException ex) {
-            throw new RuntimeException(ex);
-        }
-        if (conn == null) return;
+    private void letUpdate(JTextField userTf, JTextField emailTf, JPasswordField passTf) {
+        UserDAO userDAO = new UserDAO();
+        int userId = Integer.parseInt(session_Login.getId());
+        String username = userTf.getText().trim();
+        String email = emailTf.getText().trim();
+        String pass = new String(passTf.getPassword());
+        String hashed = BCrypt.withDefaults().hashToString(12, pass.toCharArray());
 
-        String sql = "UPDATE users SET username=?, email=?, password=? WHERE id=?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            String pass = new String(Password_Tf.getPassword());
-            ps.setString(1, Username_Tf.getText().trim());
-            ps.setString(2, Email_Tf.getText().trim());
-            ps.setString(3, pass);
-            ps.setString(4, session_Login.getId());
-            ps.executeUpdate();
-            try (PreparedStatement pst = conn.prepareStatement("SELECT * FROM users WHERE id=?")) {
-                pst.setString(1, session_Login.getId());
-                ResultSet rs = pst.executeQuery();
-                if (rs.next()) {
-                    session_Login.login(rs.getString("id"), rs.getString("username"), rs.getString("email"), rs.getString("password"));
-                    reloadSettingPanel(rs.getString("username"), rs.getString("email"), rs.getString("password"));
-                }
-            }
+        UserEntity user = userDAO.findById(userId);
+        if (user != null) {
+            user.setUsername(username);
+            user.setEmail(email);
+            user.setPassword(hashed);
+            userDAO.update(user);
+
+            session_Login.login(String.valueOf(userId), username, email, hashed);
+            AppLogger.info("Settings", "Account updated for user " + username);
+
             Notifications.getInstance().show(
                     Notifications.Type.INFO,
                     Notifications.Location.TOP_CENTER,
-                    "Update User information successful!"
+                    "Account updated successfully!"
             );
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Update failed: " + ex.getMessage());
         }
     }
 
     private void deleteMyAccount() {
-        DB getOnline = new DB();
-        String sql = "DELETE FROM users " + " WHERE id = ?";
-        Statement stmt = null;
-        try (Connection conn = DB.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            // Assuming you want to delete the currently logged-in user
-            // You'll need to get the current user's ID from the session
-            int currentUserId = Integer.parseInt(session_Login.getId().trim());  // Adjust this based on how you get the current user ID
-            pstmt.setInt(1, currentUserId);
-
-            int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected > 0) {
-                // Account deleted successfully
-                // Show success message
-                Notifications.getInstance().show(
-                        Notifications.Type.INFO,
-                        Notifications.Location.TOP_CENTER,
-                        "Your account has been deleted successfully"
-                );
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Show error message
-            Notifications.getInstance().show(
-                    Notifications.Type.ERROR,
-                    Notifications.Location.TOP_CENTER,
-                    "Error deleting account: " + e.getMessage()
-            );
-        }
-
+        UserDAO userDAO = new UserDAO();
+        int currentUserId = Integer.parseInt(session_Login.getId().trim());
+        userDAO.delete(currentUserId);
     }
 
-    private void reloadSettingPanel(String username, String email, String password) {
-        remove(settingPanel);
-        add(settingPanel());
-        revalidate();
-        repaint();
-        session_Login.setUsername(username);
-        session_Login.setEmail(email);
-        session_Login.setPassword(password);
+    private void saveConfigProps() {
+        String path = getClass().getResource("/minhcreator/config/appConfig.properties").getPath();
+        try (OutputStream os = new FileOutputStream(path)) {
+            appProps.store(os, "Warehouse Management System Configuration");
+        } catch (Exception e) {
+            AppLogger.error("Settings", "Failed to save config: " + e.getMessage());
+        }
+    }
+
+    private String getThemeKey(String displayName) {
+        for (String t : ThemeManager.getAvailableThemes()) {
+            if (ThemeManager.getThemeDisplayName(t).equals(displayName)) {
+                return t;
+            }
+        }
+        return ThemeManager.THEME_MATERIAL_LIGHT;
     }
 }
