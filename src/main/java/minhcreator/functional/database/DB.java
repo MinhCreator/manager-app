@@ -17,9 +17,9 @@ public class DB {
     public Statement stmt;
     public PreparedStatement pstmt;
 
-    private static String DB_URL = "jdbc:mysql://localhost/warehouse";
-    private static String USER = "root";
-    private static String PASSWORD = "";
+    private static String DB_URL = "jdbc:postgresql://localhost:5432/postgres";
+    private static String USER = "postgres";
+    private static String PASSWORD = "postgres";
 
     static {
         loadDbConfig();

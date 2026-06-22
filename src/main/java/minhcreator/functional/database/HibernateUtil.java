@@ -10,15 +10,15 @@ import java.util.Properties;
 
 public class HibernateUtil {
 
-    private static final String DEFAULT_DB_URL = "jdbc:mysql://localhost/warehouse";
-    private static final String DEFAULT_DB_USER = "root";
-    private static final String DEFAULT_DB_PASS = "";
+    private static final String DEFAULT_DB_URL = "jdbc:postgresql://localhost:5432/postgres";
+    private static final String DEFAULT_DB_USER = "postgres";
+    private static final String DEFAULT_DB_PASS = "postgres";
 
     static {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException("MySQL JDBC driver not found on classpath", e);
+            throw new RuntimeException("PostgreSQL JDBC driver not found on classpath", e);
         }
     }
 
