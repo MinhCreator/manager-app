@@ -72,7 +72,7 @@ public class ThemeManager {
      * without needing the concrete class at compile time.
      */
     private static class FlatLightLafProxy extends com.formdev.flatlaf.FlatLightLaf {
-        public static void setup(String themeClassName) {
+        public static synchronized void setup(String themeClassName) {
             System.setProperty("flatlaf.theme", "minhcreator/themes/" + themeClassName + ".properties");
             FlatLightLafProxy.setup();
             System.clearProperty("flatlaf.theme");

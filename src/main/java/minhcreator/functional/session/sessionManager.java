@@ -23,7 +23,7 @@ public class sessionManager {
 
     public sessionManager() {}
 
-    public sessionManager GetInstance() {
+    public static synchronized sessionManager GetInstance() {
         if (instance == null) {
             instance = new sessionManager();
         }

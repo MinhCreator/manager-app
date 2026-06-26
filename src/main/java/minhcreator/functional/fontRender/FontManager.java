@@ -14,27 +14,25 @@ import java.io.IOException;
  */
 public class FontManager extends Component {
 
+    private static final java.util.Map<String, Font> fontCache = new java.util.HashMap<>();
+
     public static void LoadFont(String FontSetting, String FlatLaf_Font, int style, int size) {
-        Component put = (Component) UIManager.put(
-                FontSetting,
-                new Font(FlatLaf_Font, style, size)
-        );
-//        return put;
+        UIManager.put(FontSetting, new Font(FlatLaf_Font, style, size));
     }
 
     public static Font load(String path, float size) {
+        String key = path + "@" + size;
+        Font cached = fontCache.get(key);
+        if (cached != null) return cached;
         try {
             File fontFile = new File(path);
             Font font = Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(size);
+            fontCache.put(key, font);
             return font;
         } catch (FontFormatException | IOException e) {
             System.err.println("Error: " + e.getMessage());
             Notifications.getInstance().show(Notifications.Type.ERROR, "Error: " + e.getMessage());
-
-            // Return default font if custom font fails to load
             return null;
-            // return FontLoader.load("Fonts/HelveticaNeue.ttf", (int) size);
         }
-
     }
 }

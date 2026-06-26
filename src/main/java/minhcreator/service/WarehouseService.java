@@ -112,11 +112,11 @@ public class WarehouseService {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             tx = session.beginTransaction();
 
-            session.createQuery("DELETE FROM SalesOrderEntity WHERE productId = :pid")
+            session.createMutationQuery("DELETE FROM SalesOrderEntity WHERE productId = :pid")
                     .setParameter("pid", productId).executeUpdate();
-            session.createQuery("DELETE FROM PurchaseOrderEntity WHERE productId = :pid")
+            session.createMutationQuery("DELETE FROM PurchaseOrderEntity WHERE productId = :pid")
                     .setParameter("pid", productId).executeUpdate();
-            session.createQuery("DELETE FROM InvoiceDetailEntity WHERE productId = :pid")
+            session.createMutationQuery("DELETE FROM InvoiceDetailEntity WHERE productId = :pid")
                     .setParameter("pid", productId).executeUpdate();
             InventoryEntity inv = session.get(InventoryEntity.class, productId);
             if (inv != null) session.remove(inv);

@@ -6,7 +6,9 @@ import minhcreator.component.CustomDialog;
 import minhcreator.component.PopUp;
 import minhcreator.component.Security.FieldCheck;
 import minhcreator.component.model.Product;
+import minhcreator.entity.InventoryEntity;
 import minhcreator.entity.UserEntity;
+import minhcreator.functional.database.dao.InventoryDAO;
 import minhcreator.functional.database.dao.UserDAO;
 import minhcreator.functional.imageSupport.imgRender;
 import minhcreator.functional.session.sessionManager;
@@ -74,7 +76,7 @@ public class Login extends JPanel {
     private Component createRightPanel() {
         JPanel panel = new JPanel(
                 new MigLayout(
-                        "wrap, fillx, insets 35 45 30 45",
+                        "wrap, fillx, insets 165 45 30 45",
                         "fill,250:280"
                 )
         );
@@ -279,9 +281,11 @@ public class Login extends JPanel {
         if (isValidLogin()) {
             session = new sessionManager();
             String email = txtUsername.getText().trim();
-            String user = getUserUsername(email);
-            String pass = getUserUserPass(email);
-            String id = getId(email);
+            UserEntity userEntity = new UserDAO().findByEmail(email);
+            String user = userEntity != null ? userEntity.getUsername() : null;
+            String pass = userEntity != null ? userEntity.getPassword() : null;
+            String id = userEntity != null ? String.valueOf(userEntity.getId()) : null;
+            if (user == null || pass == null || id == null) return;
             session.login(id, user, email, pass);
             session.createSession(user, email, pass);
             Application.login();
@@ -297,10 +301,6 @@ public class Login extends JPanel {
             AppLogger.warning("Login", "Failed login attempt for: " + txtUsername.getText().trim());
             Application.logout();
             isLogin = false;
-//            Notifications.getInstance().show(
-//                    Notifications.Type.ERROR,
-//                    Notifications.Location.TOP_CENTER,
-//                    "Login failure");
             new CustomDialog(Application.getInstance(),
                     true,
                     "Login",
@@ -415,29 +415,25 @@ public class Login extends JPanel {
         return session;
     }
 
-    // Add this method to check stock status
     private void checkStockStatus() {
         try {
             sessionManager session = getSession();
             if (session == null) return;
 
-            String userInventory = session.getYour_inventory();
-            String userProduct = session.getUser_product();
-
-            java.util.List<Product> products = WarehouseService.getAllProducts(userProduct, userInventory);
-
+            int userId = session.getUserId();
+            InventoryDAO invDAO = new InventoryDAO();
+            List<InventoryEntity> invList = invDAO.findByUserId(userId);
             int lowStockCount = 0;
             int outOfStockCount = 0;
 
-            for (Product product : products) {
-                if (product.getQuantity() == 0) {
+            for (InventoryEntity inv : invList) {
+                if (inv.getQuantity() == 0) {
                     outOfStockCount++;
-                } else if (product.getQuantity() <= 10) { // Assuming 10 is the threshold for low stock
+                } else if (inv.getQuantity() <= 10) {
                     lowStockCount++;
                 }
             }
 
-            // Show appropriate notifications
             if (outOfStockCount > 0) {
                 Notifications.getInstance().show(
                         Notifications.Type.ERROR,

@@ -31,6 +31,7 @@ public class AnalyticsPanel extends SimpleForm {
     private final int userId;
     private final InvoiceDAO invoiceDAO = new InvoiceDAO();
     private final PurchaseOrderDAO purchaseOrderDAO = new PurchaseOrderDAO();
+    private static final TimeManager TIME_MANAGER = new TimeManager();
     private JButton reloadLineChart;
 
     public AnalyticsPanel() {
@@ -56,7 +57,6 @@ public class AnalyticsPanel extends SimpleForm {
         ProductIncome.setHeader(header1);
         ProductIncome.getChartColor().addColor(Color.decode("#f87171"), Color.decode("#fb923c"), Color.decode("#fbbf24"), Color.decode("#a3e635"), Color.decode("#34d399"), Color.decode("#22d3ee"), Color.decode("#818cf8"), Color.decode("#c084fc"));
         ProductIncome.putClientProperty(FlatClientProperties.STYLE, "border:5,5,5,5,$Component.borderColor,,20");
-        ProductIncome.setDataset(createPieDataIncome());
         add(ProductIncome, "split 3,w 100:355:600,height 240");
 
         ProductCost = new PieChart();
@@ -65,7 +65,6 @@ public class AnalyticsPanel extends SimpleForm {
         ProductCost.setHeader(header2);
         ProductCost.getChartColor().addColor(Color.decode("#f87171"), Color.decode("#fb923c"), Color.decode("#fbbf24"), Color.decode("#a3e635"), Color.decode("#34d399"), Color.decode("#22d3ee"), Color.decode("#818cf8"), Color.decode("#c084fc"));
         ProductCost.putClientProperty(FlatClientProperties.STYLE, "border:5,5,5,5,$Component.borderColor,,20");
-        ProductCost.setDataset(createPieDataCost());
         add(ProductCost, "w 100:355:600,height 240");
 
         ProductProfit = new PieChart();
@@ -75,8 +74,18 @@ public class AnalyticsPanel extends SimpleForm {
         ProductProfit.getChartColor().addColor(Color.decode("#f87171"), Color.decode("#fb923c"), Color.decode("#fbbf24"), Color.decode("#a3e635"), Color.decode("#34d399"), Color.decode("#22d3ee"), Color.decode("#818cf8"), Color.decode("#c084fc"));
         ProductProfit.setChartType(PieChart.ChartType.DONUT_CHART);
         ProductProfit.putClientProperty(FlatClientProperties.STYLE, "border:5,5,5,5,$Component.borderColor,,20");
-        ProductProfit.setDataset(createPieDataProfit());
         add(ProductProfit, "w 100:355:600,height 240");
+
+        new Thread(() -> {
+            var incomeData = createPieDataIncome();
+            var costData = createPieDataCost();
+            var profitData = createPieDataProfit();
+            EventQueue.invokeLater(() -> {
+                ProductIncome.setDataset(incomeData);
+                ProductCost.setDataset(costData);
+                ProductProfit.setDataset(profitData);
+            });
+        }).start();
     }
 
     private void createLineChart() {
@@ -243,7 +252,7 @@ public class AnalyticsPanel extends SimpleForm {
 
     private void createLineChartData(String startDate, String endDate) {
         DefaultCategoryDataset<String, String> dataset = new DefaultCategoryDataset<>();
-        TimeManager tm = new TimeManager();
+        TimeManager tm = TIME_MANAGER;
         int backTraceRange = 5;
         if (startDate == null || endDate == null) {
             endDate = tm.TimeNowFormat("yyyy-MM-dd");
@@ -293,7 +302,7 @@ public class AnalyticsPanel extends SimpleForm {
                 Color.decode("#34d399")
         );
 
-        JLabel header = new JLabel("Financial Trend (" + startDate + " to " + endDate + ")");
+        JLabel header = new JLabel("Financial analyse (" + startDate + " to " + endDate + ")");
         header.putClientProperty(FlatClientProperties.STYLE, "font:+1;border:0,0,5,0");
         lineChart.setHeader(header);
     }

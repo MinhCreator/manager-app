@@ -13,6 +13,7 @@ public class UIRefreshScheduler {
     private final List<Refreshable> panels = new CopyOnWriteArrayList<>();
     private Timer globalTimer;
     private boolean running;
+    private volatile boolean dataChanged;
 
     private UIRefreshScheduler() {}
 
@@ -32,7 +33,13 @@ public class UIRefreshScheduler {
         if (panels.isEmpty()) stop();
     }
 
+    public void markDataChanged() {
+        this.dataChanged = true;
+    }
+
     public void refreshAll() {
+        if (!dataChanged) return;
+        dataChanged = false;
         for (Refreshable p : panels) {
             try {
                 EventQueue.invokeLater(p::refreshData);
@@ -43,6 +50,7 @@ public class UIRefreshScheduler {
     }
 
     public void refreshByType(Class<?> type) {
+        if (!dataChanged) return;
         for (Refreshable p : panels) {
             if (type.isInstance(p)) {
                 EventQueue.invokeLater(p::refreshData);

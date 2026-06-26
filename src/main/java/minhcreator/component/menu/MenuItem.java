@@ -74,15 +74,18 @@ public class MenuItem extends JPanel {
         init();
     }
 
+    private Icon iconCache;
+
     private Icon getIcon() {
+        if (iconCache != null) return iconCache;
         Color lightColor = FlatUIUtils.getUIColor("Menu.icon.lightColor", Color.red);
         Color darkColor = FlatUIUtils.getUIColor("Menu.icon.darkColor", Color.red);
         String path = "minhcreator/assets/MenuIcon/" + menuIndex + ".svg";
-        //FlatSVGIcon icon = new FlatSVGIcon("minhcreator/component/menu/icon/" + menuIndex + ".svg");
         FlatSVGIcon icon = new FlatSVGIcon(path);
         FlatSVGIcon.ColorFilter f = new FlatSVGIcon.ColorFilter();
         f.add(Color.decode("#969696"), lightColor, darkColor);
         icon.setColorFilter(f);
+        iconCache = icon;
         return icon;
     }
 

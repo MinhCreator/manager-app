@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
 
 public class LogViewerPanel extends SimpleForm {
 
@@ -18,6 +19,7 @@ public class LogViewerPanel extends SimpleForm {
     private JButton refreshButton;
     private JTable logTable;
     private DefaultTableModel tableModel;
+    private static final DateTimeFormatter LOG_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public LogViewerPanel() {
         init();
@@ -86,10 +88,9 @@ public class LogViewerPanel extends SimpleForm {
         }
         tableModel.setRowCount(0);
         var logs = level == null ? AppLogger.getLogs() : AppLogger.getLogsByLevel(level);
-        var fmt = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss");
         for (var entry : logs) {
             tableModel.addRow(new Object[]{
-                    fmt.format(entry.getTimestamp()),
+                    LOG_FMT.format(entry.getTimestamp()),
                     entry.getLevel(),
                     entry.getSource(),
                     entry.getMessage()

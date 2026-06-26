@@ -1,16 +1,11 @@
 package minhcreator.util;
 
-/**
- * Utility class for method support for password strength checking
- *
- * <p>
- * This class contains utility methods for checking password strength.
- * </p>
- *
- * @author Raven
- * @author Modified by MinhCreatorVN
- */
+import java.util.regex.Pattern;
+
 public class MethodUtil {
+    private static final Pattern DIGIT_PATTERN = Pattern.compile(".*\\d.*");
+    private static final Pattern SPECIAL_CHAR_PATTERN = Pattern.compile("[A-Za-z0-9]*");
+
     public static int checkPasswordStrength(String password) {
         int score = 0;
         if (password.length() >= 8) {
@@ -24,11 +19,11 @@ public class MethodUtil {
         if (hasLowercase) {
             score++;
         }
-        boolean hasDigit = password.matches(".*\\d.*");
+        boolean hasDigit = DIGIT_PATTERN.matcher(password).matches();
         if (hasDigit) {
             score++;
         }
-        boolean hasSpecialChar = !password.matches("[A-Za-z0-9]*");
+        boolean hasSpecialChar = !SPECIAL_CHAR_PATTERN.matcher(password).matches();
         if (hasSpecialChar) {
             score++;
         }

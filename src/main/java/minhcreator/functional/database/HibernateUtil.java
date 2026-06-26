@@ -36,6 +36,13 @@ public class HibernateUtil {
                             dbProps.getProperty("db.user", DEFAULT_DB_USER))
                     .setProperty("hibernate.connection.password",
                             dbProps.getProperty("db.password", DEFAULT_DB_PASS))
+                    .setProperty("hibernate.c3p0.min_size", "2")
+                    .setProperty("hibernate.c3p0.max_size", "10")
+                    .setProperty("hibernate.c3p0.timeout", "300")
+                    .setProperty("hibernate.c3p0.max_statements", "50")
+                    .setProperty("hibernate.c3p0.idle_test_period", "120")
+                    .setProperty("hibernate.c3p0.preferredTestQuery", "SELECT 1")
+                    .setProperty("hibernate.c3p0.testConnectionOnCheckout", "true")
                     .addAnnotatedClass(UserEntity.class)
                     .addAnnotatedClass(ProductEntity.class)
                     .addAnnotatedClass(InventoryEntity.class)

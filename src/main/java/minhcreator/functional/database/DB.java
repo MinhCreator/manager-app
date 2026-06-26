@@ -5,17 +5,9 @@ import java.io.InputStream;
 import java.sql.*;
 import java.util.Properties;
 
-/**
- * Legacy JDBC connection manager. Credentials are loaded from
- * appConfig.properties at runtime, falling back to defaults.
- *
- * @author MinhCreatorVN
- */
 public class DB {
-    public static Connection conn = null;
+
     private static DB instance;
-    public Statement stmt;
-    public PreparedStatement pstmt;
 
     private static String DB_URL = "jdbc:postgresql://localhost:5432/postgres";
     private static String USER = "postgres";
@@ -47,40 +39,24 @@ public class DB {
         return instance;
     }
 
-    private synchronized static void initializeConnection() throws SQLException {
-        if (conn == null || conn.isClosed()) {
-            conn = DriverManager.getConnection(DB_URL, USER, PASSWORD);
-        }
-    }
-
-    public synchronized static Connection getConnection() throws SQLException {
-        if (conn == null || conn.isClosed()) {
-            initializeConnection();
-        }
-        return conn;
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(DB_URL, USER, PASSWORD);
     }
 
     public int executionSQL(String query) {
-        Connection connection = null;
-        Statement stmt = null;
-        try {
-            connection = getConnection();
-            stmt = connection.createStatement();
+        try (Connection connection = getConnection();
+             Statement stmt = connection.createStatement()) {
             return stmt.executeUpdate(query);
         } catch (SQLException e) {
             e.printStackTrace();
             return 0;
-        } finally {
-            closeResources(null, stmt, null);
         }
     }
 
     public ResultSet selectSQL(String query) {
-        Connection connection = null;
-        Statement stmt = null;
         try {
-            connection = getConnection();
-            stmt = connection.createStatement();
+            Connection connection = getConnection();
+            Statement stmt = connection.createStatement();
             return stmt.executeQuery(query);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -88,20 +64,11 @@ public class DB {
         }
     }
 
-    private static void closeResources(ResultSet rs, Statement stmt, Connection conn) {
+    public static void closeResources(ResultSet rs, Statement stmt, Connection conn) {
         try {
             if (rs != null) rs.close();
             if (stmt != null) stmt.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void closeConnection() {
-        try {
-            if (conn != null && !conn.isClosed()) {
-                conn.close();
-            }
+            if (conn != null) conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }

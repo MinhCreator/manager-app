@@ -4,7 +4,9 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 public class AppLogger {
@@ -32,7 +34,7 @@ public class AppLogger {
         public String getMessage() { return message; }
     }
 
-    private static final List<LogEntry> logs = new ArrayList<>();
+    private static final Deque<LogEntry> logs = new ArrayDeque<>();
     private static final int MAX_LOG_SIZE = 1000;
     private static DefaultTableModel tableModel;
 
@@ -58,18 +60,19 @@ public class AppLogger {
     }
 
     private static synchronized void add(LogEntry entry) {
-        logs.add(entry);
+        logs.addLast(entry);
         if (logs.size() > MAX_LOG_SIZE) {
-            logs.remove(0);
+            logs.removeFirst();
         }
         SwingUtilities.invokeLater(() -> appendToTable(entry));
     }
 
+    private static final DateTimeFormatter TABLE_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
+
     private static void appendToTable(LogEntry entry) {
         if (tableModel == null) return;
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm:ss");
         tableModel.addRow(new Object[]{
-                fmt.format(entry.getTimestamp()),
+                TABLE_FMT.format(entry.getTimestamp()),
                 entry.getLevel(),
                 entry.getSource(),
                 entry.getMessage()
@@ -85,6 +88,10 @@ public class AppLogger {
 
     public static List<LogEntry> getLogsByLevel(Level level) {
         return logs.stream().filter(e -> e.getLevel() == level).toList();
+    }
+
+    public static Deque<LogEntry> getLogDeque() {
+        return logs;
     }
 
     public static void clear() {

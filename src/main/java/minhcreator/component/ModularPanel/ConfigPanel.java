@@ -88,8 +88,8 @@ public class ConfigPanel extends SimpleForm {
             props.setProperty("width", widthSpinner.getValue().toString());
             props.setProperty("height", heightSpinner.getValue().toString());
 
-            String path = getClass().getResource("/minhcreator/config/appConfig.properties").getPath();
-            try (OutputStream os = new FileOutputStream(path)) {
+            try (OutputStream os = new FileOutputStream(
+                    "config/appConfig.properties", false)) {
                 props.store(os, "Warehouse Management System Configuration");
             }
 

@@ -16,7 +16,7 @@ import raven.toast.Notifications;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Dictionary;
+import java.util.Map;
 
 public class Application extends JFrame {
     private static Application app;
@@ -26,8 +26,10 @@ public class Application extends JFrame {
 
     public Application() {
         this.Config = global.Config("/minhcreator/config", "appConfig.properties");
-        this.width = Integer.parseInt(Config.get("width"));
-        this.height = Integer.parseInt(Config.get("height"));
+        // this.width = Integer.parseInt(Config.get("width"));
+        this.width = 1366;
+        // this.height = Integer.parseInt(Config.get("height"));
+        this.height = 768;
         mainForm = new MainForm();
         loginForm = new Login();
         signUpForm = new Sign_up();
@@ -37,7 +39,8 @@ public class Application extends JFrame {
     }
 
     private void init() {
-        setTitle(Config.get("title"));
+        // setTitle(Config.get("title"));
+        setTitle("Warehouse Management System");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         pack();
         initComponents();
@@ -140,7 +143,7 @@ public class Application extends JFrame {
         return theme;
     }
 
-    private final Dictionary<String, String> Config;
+    private final Map<String, String> Config;
     private final int width;
     private final int height;
     private static final FontManager fontSupport = new FontManager();

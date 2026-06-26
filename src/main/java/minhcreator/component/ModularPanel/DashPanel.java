@@ -44,6 +44,7 @@ public class DashPanel extends JPanel implements Refreshable {
 
     @Override
     public void refreshData() {
+        cacheValid = false;
         AppLogger.debug("Dashboard", "Auto-refreshing dashboard data");
         buildContent();
     }
@@ -106,6 +107,16 @@ public class DashPanel extends JPanel implements Refreshable {
 
     // ─── Left: Recent Invoices Table ─────────────────────────────────
 
+    private static final DateTimeFormatter CARD_DATE_FMT = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+    private final InvoiceDAO dashInvDAO = new InvoiceDAO();
+    private final ProductDAO dashProdDAO = new ProductDAO();
+    private final InventoryDAO dashInvDAO2 = new InventoryDAO();
+    private final PurchaseOrderDAO dashPoDAO = new PurchaseOrderDAO();
+    private List<InvoiceEntity> cachedInvoices;
+    private List<ProductEntity> cachedProducts;
+    private List<InventoryEntity> cachedInventory;
+    private boolean cacheValid;
+
     private JPanel createInvoiceTablePanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 6));
         panel.putClientProperty(FlatClientProperties.STYLE, "arc:16;border:1,1,1,1,$Component.borderColor,,16");
@@ -119,14 +130,13 @@ public class DashPanel extends JPanel implements Refreshable {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
 
-        InvoiceDAO invDAO = new InvoiceDAO();
-        List<InvoiceEntity> invoices = invDAO.findByUserId(userId);
-        int displayCount = Math.min(invoices.size(), 20);
+        loadCachedData();
+        int displayCount = Math.min(cachedInvoices.size(), 20);
 
         for (int i = 0; i < displayCount; i++) {
-            InvoiceEntity inv = invoices.get(i);
+            InvoiceEntity inv = cachedInvoices.get(i);
             String date = inv.getCreatedAt() != null
-                    ? inv.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                    ? inv.getCreatedAt().format(CARD_DATE_FMT)
                     : "";
             model.addRow(new Object[]{
                     inv.getInvoiceId(),
@@ -155,13 +165,21 @@ public class DashPanel extends JPanel implements Refreshable {
         scroll.getViewport().setOpaque(false);
         panel.add(scroll, BorderLayout.CENTER);
 
-        double totalInvoiceAmount = invoices.stream().mapToDouble(InvoiceEntity::getTotalAmount).sum();
-        JLabel summary = new JLabel(String.format("  Total: $%,.0f across %d invoices", totalInvoiceAmount, invoices.size()));
+        double totalInvoiceAmount = cachedInvoices.stream().mapToDouble(InvoiceEntity::getTotalAmount).sum();
+        JLabel summary = new JLabel(String.format("  Total: $%,.0f across %d invoices", totalInvoiceAmount, cachedInvoices.size()));
         summary.putClientProperty(FlatClientProperties.STYLE, "font:-1");
         summary.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 8));
         panel.add(summary, BorderLayout.SOUTH);
 
         return panel;
+    }
+
+    private void loadCachedData() {
+        if (cacheValid) return;
+        cachedInvoices = dashInvDAO.findByUserId(userId);
+        cachedProducts = dashProdDAO.findByUserId(userId);
+        cachedInventory = dashInvDAO2.findByUserId(userId);
+        cacheValid = true;
     }
 
     // ─── Right: Low Stock Alerts ─────────────────────────────────────
@@ -174,10 +192,7 @@ public class DashPanel extends JPanel implements Refreshable {
         header.putClientProperty(FlatClientProperties.STYLE, "font:bold +2");
         panel.add(header, BorderLayout.NORTH);
 
-        ProductDAO prodDAO = new ProductDAO();
-        InventoryDAO invDAO = new InventoryDAO();
-        List<ProductEntity> products = prodDAO.findByUserId(userId);
-        List<InventoryEntity> invList = invDAO.findByUserId(userId);
+        loadCachedData();
 
         String[] cols = {"Product", "Qty", "Status"};
         DefaultTableModel model = new DefaultTableModel(cols, 0) {
@@ -188,10 +203,13 @@ public class DashPanel extends JPanel implements Refreshable {
         int lowCount = 0;
         int outCount = 0;
 
-        for (ProductEntity p : products) {
-            InventoryEntity inv = invList.stream()
-                    .filter(i -> i.getProductId() == p.getId())
-                    .findFirst().orElse(null);
+        java.util.Map<Integer, InventoryEntity> invMap = new java.util.HashMap<>();
+        for (InventoryEntity i : cachedInventory) {
+            invMap.put(i.getProductId(), i);
+        }
+
+        for (ProductEntity p : cachedProducts) {
+            InventoryEntity inv = invMap.get(p.getId());
             int qty = inv != null ? inv.getQuantity() : 0;
 
             StockStatus status = StockStatus.getStatusBage(qty, threshold);
@@ -261,25 +279,38 @@ public class DashPanel extends JPanel implements Refreshable {
 
     // ─── Data Methods ────────────────────────────────────────────────
 
+    private Double cachedProfit;
+    private Double cachedCost;
+    private Integer cachedStorage;
+
     private double getProfit() {
-        InvoiceDAO invDAO = new InvoiceDAO();
-        PurchaseOrderDAO poDAO = new PurchaseOrderDAO();
-        List<Object[]> income = invDAO.getIncomeByCategory(userId);
-        List<Object[]> cost = poDAO.getCostByCategory(userId);
+        if (cachedProfit != null) return cachedProfit;
+        List<Object[]> income = dashInvDAO.getIncomeByCategory(userId);
+        List<Object[]> cost = dashPoDAO.getCostByCategory(userId);
         double rev = income.stream().mapToDouble(r -> r[1] != null ? (double) r[1] : 0).sum();
         double exp = cost.stream().mapToDouble(r -> r[1] != null ? (double) r[1] : 0).sum();
-        return rev - exp;
+        cachedProfit = rev - exp;
+        return cachedProfit;
     }
 
     private double getCost() {
-        PurchaseOrderDAO poDAO = new PurchaseOrderDAO();
-        List<Object[]> cost = poDAO.getCostByCategory(userId);
-        return cost.stream().mapToDouble(r -> r[1] != null ? (double) r[1] : 0).sum();
+        if (cachedCost != null) return cachedCost;
+        List<Object[]> cost = dashPoDAO.getCostByCategory(userId);
+        cachedCost = cost.stream().mapToDouble(r -> r[1] != null ? (double) r[1] : 0).sum();
+        return cachedCost;
     }
 
     private int getCurrStorage() {
-        InventoryDAO invDAO = new InventoryDAO();
-        return invDAO.findByUserId(userId).stream()
+        if (cachedStorage != null) return cachedStorage;
+        cachedStorage = dashInvDAO2.findByUserId(userId).stream()
                 .mapToInt(InventoryEntity::getQuantity).sum();
+        return cachedStorage;
+    }
+
+    private void invalidateCaches() {
+        cacheValid = false;
+        cachedProfit = null;
+        cachedCost = null;
+        cachedStorage = null;
     }
 }

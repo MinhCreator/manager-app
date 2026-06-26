@@ -153,6 +153,25 @@ public class InventoryDAO {
         }
     }
 
+    public List<Object[]> getProductsWithInventorySorted(int userId, String sortField, String sortOrder) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String validSort = switch (sortField) {
+                case "name" -> "p.name";
+                case "category" -> "i.category";
+                case "price" -> "i.price";
+                case "quantity" -> "i.quantity";
+                default -> "p.UPID";
+            };
+            String direction = "ASC".equalsIgnoreCase(sortOrder) ? "ASC" : "DESC";
+            String hql = "SELECT p.id, p.UPID, p.name, i.category, i.price, i.sellingPrice, i.quantity " +
+                    "FROM ProductEntity p LEFT JOIN InventoryEntity i ON p.id = i.productId " +
+                    "WHERE p.userId = :uid ORDER BY " + validSort + " " + direction;
+            Query<Object[]> q = session.createQuery(hql, Object[].class);
+            q.setParameter("uid", userId);
+            return q.list();
+        }
+    }
+
     public List<Object[]> searchProductsWithInventory(int userId, String searchText) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             String pat = "%" + searchText + "%";

@@ -11,16 +11,15 @@ import java.time.format.DateTimeParseException;
  * @version 1.0 PreAlpha
  */
 public class TimeManager {
-    private static TimeManager instance;
+    private static volatile TimeManager instance;
 
-    /**
-     * Returns the singleton instance of TimeManager.
-     *
-     * @return the singleton instance of TimeManager
-     */
-    public TimeManager GetInstance() {
+    public static TimeManager GetInstance() {
         if (instance == null) {
-            instance = new TimeManager();
+            synchronized (TimeManager.class) {
+                if (instance == null) {
+                    instance = new TimeManager();
+                }
+            }
         }
         return instance;
     }
@@ -37,12 +36,11 @@ public class TimeManager {
      * @return the current time in the specified format
      * @author MinhCreatorVN
      */
+    private static final java.util.Map<String, DateTimeFormatter> FORMATTER_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
     public String TimeNowFormat(String format) {
         LocalDateTime times = LocalDateTime.now();
-
-        DateTimeFormatter pattern_format = DateTimeFormatter.ofPattern(format);
-
-        // return time after formated
+        DateTimeFormatter pattern_format = FORMATTER_CACHE.computeIfAbsent(format, DateTimeFormatter::ofPattern);
         return pattern_format.format(times);
     }
 
@@ -56,21 +54,15 @@ public class TimeManager {
      * @author MinhCreatorVN
      */
     public String TimeDateFormated(String dateTime, String format) {
-        // First try to parse with space separator, if that fails try with ISO format
         try {
-            // default format
-            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            // transform string to standard date format
+            DateTimeFormatter inputFormatter = FORMATTER_CACHE.computeIfAbsent("yyyy-MM-dd", DateTimeFormatter::ofPattern);
             LocalDate covert_string_to_date = LocalDate.parse(dateTime, inputFormatter);
-
-            // format date to matched given format
-            DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern(format);
+            DateTimeFormatter outputFormatter = FORMATTER_CACHE.computeIfAbsent(format, DateTimeFormatter::ofPattern);
             return outputFormatter.format(covert_string_to_date);
         } catch (DateTimeParseException e) {
-            // If space-separated format fails, try with default ISO format
             try {
                 LocalDate covert_string_to_date = LocalDate.parse(dateTime);
-                DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern(format);
+                DateTimeFormatter outputFormatter = FORMATTER_CACHE.computeIfAbsent(format, DateTimeFormatter::ofPattern);
                 return outputFormatter.format(covert_string_to_date);
             } catch (DateTimeParseException e2) {
                 throw new IllegalArgumentException("Invalid date-time format. Expected 'yyyy-MM-dd HH:mm:ss' or ISO format");
@@ -88,12 +80,9 @@ public class TimeManager {
      * @author MinhCreatorVN
      */
     public String wayBackMachine(String currDay, String format, int backTraceDay) {
-        // format current day
-        LocalDate currDayParse = LocalDate.parse(currDay, DateTimeFormatter.ofPattern(format));
+        DateTimeFormatter formatter = FORMATTER_CACHE.computeIfAbsent(format, DateTimeFormatter::ofPattern);
+        LocalDate currDayParse = LocalDate.parse(currDay, formatter);
         LocalDate BackDate = currDayParse.minusDays(backTraceDay);
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
         return BackDate.format(formatter);
-
     }
 }

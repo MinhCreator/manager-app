@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Warehouse Manager — project visualization</title>
+<script>
+(function() {
+  var saved = localStorage.getItem('theme');
+  var prefers = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (saved === 'dark' || (!saved && prefers)) document.documentElement.classList.add('dark');
+})();
+</script>
+<style>
+  :root {
+    --ivory:    #FAF9F5;
+    --slate:    #141413;
+    --clay:     #D97757;
+    --clay-d:   #B85C3E;
+    --oat:      #E3DACC;
+    --olive:    #788C5D;
+    --g100:     #F0EEE6;
+    --g200:     #D1CFC5;
+    --g500:     #87867F;
+    --g700:     #3D3D3A;
+    --white:    #FFFFFF;
+    --serif:    ui-serif, Georgia, "Times New Roman", serif;
+    --sans:     system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono:     ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+    --bg:       var(--ivory);
+    --fg:       var(--g700);
+    --card-bg:  var(--white);
+    --border:   var(--g200);
+    --accent:   var(--clay);
+    --accent-d: var(--clay-d);
+    --muted:    var(--g500);
+    --code-bg:  var(--slate);
+    --code-fg:  #E8E6DE;
+    --tag-bg:   var(--g100);
+    --toast-bg: var(--g100);
+  }
+  html.dark {
+    --ivory:    #1C1B1F;
+    --slate:    #E6E1E5;
+    --clay:     #D0BCFF;
+    --clay-d:   #E8DEF8;
+    --oat:      #4A4458;
+    --olive:    #81C995;
+    --g100:     #2B2930;
+    --g200:     #48464C;
+    --g500:     #938F99;
+    --g700:     #CAC4D0;
+    --white:    #26242A;
+    --bg:       var(--ivory);
+    --fg:       var(--g700);
+    --card-bg:  var(--white);
+    --border:   var(--g200);
+    --accent:   var(--clay);
+    --accent-d: var(--clay-d);
+    --muted:    var(--g500);
+    --code-bg:  #0B0B0F;
+    --code-fg:  #E6E1E5;
+    --tag-bg:   var(--g100);
+    --toast-bg: var(--g100);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 24px 96px;
+    transition: background 200ms, color 200ms;
+  }
+  .page { max-width: 1200px; margin: 0 auto; }
+
+  /* theme toggle */
+  #themeToggle {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    color: var(--fg);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,.1);
+    transition: background 200ms, color 200ms, transform 100ms, border-color 200ms;
+  }
+  #themeToggle:hover { transform: scale(1.08); border-color: var(--accent); }
+
+  /* header */
+  header { padding: 56px 0 8px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 22px; height: 1.5px;
+    background: var(--accent);
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(34px, 5vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.016em;
+    color: var(--slate);
+    margin-bottom: 10px;
+  }
+  h1 em { font-style: italic; color: var(--accent); }
+  .subtitle {
+    font-size: 15.5px;
+    color: var(--muted);
+    max-width: 680px;
+    margin-bottom: 4px;
+  }
+  .subtitle code { font-family: var(--mono); font-size: 13px; background: var(--tag-bg); padding: 1px 5px; border-radius: 4px; }
+
+  /* summary strip */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin: 36px 0 48px;
+  }
+  .summary .cell {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    transition: background 200ms, border-color 200ms;
+  }
+  .summary .k {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  .summary .v {
+    font-size: 20px;
+    color: var(--slate);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .summary .v.hl { color: var(--accent); }
+
+  /* sections */
+  section { margin-bottom: 56px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .sec-head .num {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--oat);
+    color: var(--slate);
+    padding: 3px 9px;
+    border-radius: 8px;
+    transition: background 200ms, color 200ms;
+  }
+  .sec-head h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 25px;
+    color: var(--slate);
+    letter-spacing: -0.01em;
+    transition: color 200ms;
+  }
+  .sec-intro {
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 720px;
+    margin-bottom: 24px;
+  }
+
+  /* architecture layers */
+  .layers { display: flex; flex-direction: column; gap: 0; }
+  .layer {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 18px;
+    padding: 16px 0;
+    border-bottom: 1.5px solid var(--border);
+    transition: border-color 200ms;
+  }
+  .layer:last-child { border-bottom: none; }
+  .layer .lbl {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding-top: 2px;
+  }
+  .layer .lbl .icon { display: block; font-size: 18px; letter-spacing: 0; margin-bottom: 2px; }
+  .layer .pkg {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .layer .pkg span {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 11px;
+    transition: background 200ms, border-color 200ms, color 200ms;
+  }
+  .layer .pkg span.hot {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, var(--card-bg));
+  }
+
+  /* ER diagram */
+  .er-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .er-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: background 200ms, border-color 200ms;
+  }
+  .er-card:hover { border-color: var(--accent); }
+  .er-head {
+    padding: 11px 14px;
+    border-bottom: 1.5px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--slate);
+    background: var(--g100);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 200ms, border-color 200ms, color 200ms;
+  }
+  .er-head .db { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-left: auto; }
+  .er-body { padding: 10px 14px 12px; }
+  .er-field {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--fg);
+    padding: 2px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 200ms;
+  }
+  .er-field .pk { color: var(--accent); font-weight: 600; }
+
+  /* feature grid */
+  .feat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .feat-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    transition: background 200ms, border-color 200ms;
+  }
+  .feat-card:hover { border-color: var(--accent); }
+  .feat-card .icon-b { font-size: 22px; margin-bottom: 6px; display: block; }
+  .feat-card h3 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 17px;
+    color: var(--slate);
+    margin-bottom: 4px;
+    letter-spacing: -0.005em;
+    transition: color 200ms;
+  }
+  .feat-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* tech stack pills */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .tech-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 200ms, border-color 200ms;
+  }
+  .tech-card:hover { border-color: var(--accent); }
+  .tech-card .t-icon { font-size: 20px; flex-shrink: 0; }
+  .tech-card .t-info { flex: 1; }
+  .tech-card .t-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--slate);
+    transition: color 200ms;
+  }
+  .tech-card .t-desc {
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  /* menu table */
+  .menu-table {
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card-bg);
+    transition: background 200ms, border-color 200ms;
+  }
+  .menu-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 1.4fr;
+    gap: 0;
+  }
+  .menu-row + .menu-row { border-top: 1.5px solid var(--border); }
+  .menu-row .cell {
+    padding: 11px 16px;
+    font-size: 13px;
+  }
+  .menu-row .cell + .cell { border-left: 1.5px solid var(--border); }
+  .menu-row.head {
+    background: var(--g100);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 600;
+    transition: background 200ms;
+  }
+  .menu-row .idx { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .menu-row .label { font-weight: 500; color: var(--slate); transition: color 200ms; }
+  .menu-row .pkg-name { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  /* diagram */
+  .arch-diagram {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    overflow-x: auto;
+    transition: background 200ms, border-color 200ms;
+  }
+  .arch-diagram svg { display: block; min-width: 740px; }
+  .arch-diagram .sub { font-size: 10px; fill: var(--muted); }
+  .arch-diagram text { font-family: var(--mono); }
+  .arch-diagram .edge { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+  .arch-diagram .edge-hot { stroke: var(--accent); stroke-width: 1.5; fill: none; stroke-dasharray: 5 3; }
+  .arch-diagram .hl-box { stroke: var(--accent); stroke-width: 2; }
+
+  /* flow walkthrough */
+  .flow-steps { display: flex; flex-direction: column; gap: 0; margin-top: 20px; }
+  .flow-step {
+    display: grid;
+    grid-template-columns: 36px 120px 1fr;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1.5px solid var(--border);
+    transition: border-color 200ms;
+  }
+  .flow-step:last-child { border-bottom: none; }
+  .flow-step .dot {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--g100);
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: background 200ms, border-color 200ms, color 200ms;
+  }
+  .flow-step.hot .dot {
+    background: color-mix(in srgb, var(--accent) 14%, var(--card-bg));
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .flow-step .loc {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--slate);
+    padding-top: 2px;
+    transition: color 200ms;
+  }
+  .flow-step .loc .cls { color: var(--muted); }
+  .flow-step .desc p { font-size: 13.5px; color: var(--fg); margin-bottom: 6px; }
+  .flow-step .desc p:last-child { margin-bottom: 0; }
+  .flow-step .desc code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: var(--tag-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    transition: background 200ms;
+  }
+
+  /* footer */
+  footer {
+    margin-top: 64px;
+    padding-top: 28px;
+    border-top: 1.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12.5px;
+    color: var(--muted);
+    transition: border-color 200ms, color 200ms;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* responsive */
+  @media (max-width: 720px) {
+    body { padding: 0 16px 80px; }
+    header { padding-top: 36px; }
+    .layer { grid-template-columns: 1fr; gap: 8px; }
+    .menu-row { grid-template-columns: 1fr; }
+    .menu-row.head { display: none; }
+    .menu-row .cell + .cell { border-left: none; border-top: 1px dashed var(--border); }
+    .flow-step { grid-template-columns: 36px 1fr; gap: 10px; }
+    .flow-step .loc { grid-column: 1 / -1; margin-left: 50px; }
+  }
+
+  /* color swatch row */
+  .swatches { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .swatch {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.2;
+    transition: border-color 200ms;
+  }
+  .swatch.light { background: #FAF9F5; color: #141413; }
+  .swatch.dark { background: #1C1B1F; color: #E6E1E5; }
+  .swatch.accent { background: #D97757; }
+  .swatch.accent-d { background: #B85C3E; }
+  .swatch.oat { background: #E3DACC; color: #141413; }
+  .swatch.olive { background: #788C5D; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="eyebrow">MinhCreatorVN · Java Desktop</div>
+    <h1>Warehouse <em>Manager</em></h1>
+    <p class="subtitle">
+      A full-featured warehouse &amp; business management desktop application built with
+      <code>Java</code>, <code>Swing</code>, <code>FlatLaf</code>, and <code>Hibernate 6</code>.
+      Inventory tracking, invoicing, analytics, and multi-user auth — all in a single JAR.
+    </p>
+  </header>
+
+  <!-- summary -->
+  <div class="summary">
+    <div class="cell"><div class="k">Java sources</div><div class="v hl">67</div></div>
+    <div class="cell"><div class="k">Packages</div><div class="v">25</div></div>
+    <div class="cell"><div class="k">DB tables</div><div class="v">7</div></div>
+    <div class="cell"><div class="k">JPA entities</div><div class="v">7</div></div>
+    <div class="cell"><div class="k">Themes</div><div class="v">4</div></div>
+    <div class="cell"><div class="k">SVG icons</div><div class="v hl">~45</div></div>
+  </div>
+
+  <!-- architecture -->
+  <section>
+    <div class="sec-head"><span class="num">01</span><h2>Layered architecture</h2></div>
+    <p class="sec-intro">Four clean layers from the Swing UI down to PostgreSQL. The middleware boundary is unambiguous.</p>
+    <div class="layers">
+      <div class="layer">
+        <div class="lbl"><span class="icon">🖥</span>Presentation</div>
+        <div class="pkg">
+          <span class="hot">Application.java</span>
+          <span class="hot">Login.java</span>
+          <span>MainForm.java</span>
+          <span>Dashboard.java</span>
+          <span>WarehouseInventory.java</span>
+          <span>Analytics.java</span>
+          <span>invoice.java</span>
+          <span>settings.java</span>
+          <span>Logs.java</span>
+          <span>AppConfigPage.java</span>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="lbl"><span class="icon">🧩</span>Components</div>
+        <div class="pkg">
+          <span>Card.java</span>
+          <span>RoundPanel.java</span>
+          <span>CustomDialog.java</span>
+          <span>PopUp.java</span>
+          <span>Menu.java</span>
+          <span>DashPanel.java</span>
+          <span>WarehousePanel.java</span>
+          <span>AnalyticsPanel.java</span>
+          <span>invoicesPanel.java</span>
+          <span>LogViewerPanel.java</span>
+          <span>ConfigPanel.java</span>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="lbl"><span class="icon">⚙</span>Services</div>
+        <div class="pkg">
+          <span class="hot">WarehouseService.java</span>
+          <span class="hot">orderService.java</span>
+          <span>orderPanel.java</span>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="lbl"><span class="icon">🗄</span>Data Access</div>
+        <div class="pkg">
+          <span>UserDAO.java</span>
+          <span>ProductDAO.java</span>
+          <span>InventoryDAO.java</span>
+          <span>PurchaseOrderDAO.java</span>
+          <span>SalesOrderDAO.java</span>
+          <span>InvoiceDAO.java</span>
+          <span>HibernateUtil.java</span>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="lbl"><span class="icon">📦</span>Database</div>
+        <div class="pkg">
+          <span>PostgreSQL (Supabase)</span>
+          <span>MySQL (legacy)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- data flow -->
+  <section>
+    <div class="sec-head"><span class="num">02</span><h2>Data flow</h2></div>
+    <p class="sec-intro">Four distinct request paths through the application. Every flow crosses the same layer boundary — Swing → Service → DAO → Hibernate → PostgreSQL — but touches different tables and carries different payloads.</p>
+
+    <div class="arch-diagram">
+      <svg viewBox="0 0 900 440" width="900" height="440">
+        <defs>
+          <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10z" fill="var(--muted, #87867F)"/>
+          </marker>
+          <marker id="ac" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10z" fill="var(--accent, #D97757)"/>
+          </marker>
+        </defs>
+
+        <!-- ===== left column: layers ===== -->
+        <g font-size="11" fill="var(--slate, #141413)">
+          <rect x="16" y="16" width="140" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="86" y="32" text-anchor="middle" font-weight="600" font-size="11">Panel / Page</text>
+          <text class="sub" x="86" y="46" text-anchor="middle">Swing UI</text>
+
+          <rect x="16" y="72" width="140" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="86" y="88" text-anchor="middle" font-weight="600" font-size="11">Service</text>
+          <text class="sub" x="86" y="102" text-anchor="middle">Business Logic</text>
+
+          <rect x="16" y="128" width="140" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="86" y="144" text-anchor="middle" font-weight="600" font-size="11">DAO</text>
+          <text class="sub" x="86" y="158" text-anchor="middle">Hibernate / JPA</text>
+
+          <rect x="16" y="184" width="140" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="86" y="200" text-anchor="middle" font-weight="600" font-size="11">PostgreSQL</text>
+          <text class="sub" x="86" y="214" text-anchor="middle">Supabase</text>
+
+          <!-- connecting arrows (left spine) -->
+          <line class="edge" x1="86" y1="54" x2="86" y2="72"/>
+          <line class="edge" x1="86" y1="110" x2="86" y2="128"/>
+          <line class="edge" x1="86" y1="166" x2="86" y2="184"/>
+        </g>
+
+        <!-- ===== flow A: Authentication ===== -->
+        <g font-size="11" fill="var(--slate, #141413)">
+          <rect x="188" y="16" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--accent, #D97757)" stroke-width="2"/>
+          <text x="263" y="32" text-anchor="middle" font-weight="600" fill="var(--accent, #D97757)" font-size="11">Login.java</text>
+          <text class="sub" x="263" y="46" text-anchor="middle">Login / Sign_up</text>
+
+          <rect x="188" y="72" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="263" y="88" text-anchor="middle" font-weight="600" font-size="11">sessionManager</text>
+          <text class="sub" x="263" y="102" text-anchor="middle">BCrypt verify</text>
+
+          <rect x="188" y="128" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="263" y="144" text-anchor="middle" font-weight="600" font-size="11">UserDAO</text>
+          <text class="sub" x="263" y="158" text-anchor="middle">findByUsername</text>
+
+          <rect x="188" y="184" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="263" y="200" text-anchor="middle" font-weight="600" font-size="11">users</text>
+          <text class="sub" x="263" y="214" text-anchor="middle">email / password hash</text>
+
+          <line class="edge" x1="156" y1="35" x2="188" y2="35"/>
+          <line class="edge" x1="263" y1="54" x2="263" y2="72"/>
+          <line class="edge" x1="263" y1="110" x2="263" y2="128"/>
+          <line class="edge" x1="263" y1="166" x2="263" y2="184"/>
+
+          <text x="172" y="30" font-size="9" fill="var(--accent, #D97757)" font-weight="600">A</text>
+        </g>
+
+        <!-- ===== flow B: Inventory CRUD ===== -->
+        <g font-size="11" fill="var(--slate, #141413)">
+          <rect x="370" y="16" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="445" y="32" text-anchor="middle" font-weight="600" font-size="11">WarehousePanel</text>
+          <text class="sub" x="445" y="46" text-anchor="middle">Table CRUD</text>
+
+          <rect x="370" y="72" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--accent, #D97757)" stroke-width="2"/>
+          <text x="445" y="88" text-anchor="middle" font-weight="600" fill="var(--accent, #D97757)" font-size="11">WarehouseService</text>
+          <text class="sub" x="445" y="102" text-anchor="middle">Stock IN/OUT logic</text>
+
+          <rect x="370" y="128" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="445" y="144" text-anchor="middle" font-weight="600" font-size="11">InventoryDAO</text>
+          <text class="sub" x="445" y="158" text-anchor="middle">ProductDAO</text>
+
+          <rect x="370" y="184" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="445" y="200" text-anchor="middle" font-weight="600" font-size="11">inventory</text>
+          <text class="sub" x="445" y="214" text-anchor="middle">products</text>
+
+          <line class="edge" x1="338" y1="35" x2="370" y2="35"/>
+          <line class="edge" x1="445" y1="54" x2="445" y2="72"/>
+          <line class="edge" x1="445" y1="110" x2="445" y2="128"/>
+          <line class="edge" x1="445" y1="166" x2="445" y2="184"/>
+
+          <text x="356" y="30" font-size="9" fill="var(--accent, #D97757)" font-weight="600">B</text>
+        </g>
+
+        <!-- ===== flow C: Checkout ===== -->
+        <g font-size="11" fill="var(--slate, #141413)">
+          <rect x="552" y="16" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="627" y="32" text-anchor="middle" font-weight="600" font-size="11">orderPanel</text>
+          <text class="sub" x="627" y="46" text-anchor="middle">Cart Dialog</text>
+
+          <rect x="552" y="72" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--accent, #D97757)" stroke-width="2"/>
+          <text x="627" y="88" text-anchor="middle" font-weight="600" fill="var(--accent, #D97757)" font-size="11">orderService</text>
+          <text class="sub" x="627" y="102" text-anchor="middle">Stock validation</text>
+
+          <rect x="552" y="128" width="150" height="76" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="627" y="144" text-anchor="middle" font-weight="600" font-size="11">InvoiceDAO</text>
+          <text class="sub" x="627" y="158" text-anchor="middle">SalesOrderDAO</text>
+          <text class="sub" x="627" y="174" text-anchor="middle">InventoryDAO</text>
+
+          <rect x="552" y="222" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="627" y="238" text-anchor="middle" font-weight="600" font-size="11">invoices</text>
+          <text class="sub" x="627" y="252" text-anchor="middle">sales_orders · inventory</text>
+
+          <line class="edge" x1="520" y1="35" x2="552" y2="35"/>
+          <line class="edge" x1="627" y1="54" x2="627" y2="72"/>
+          <line class="edge" x1="627" y1="110" x2="627" y2="128"/>
+          <line class="edge" x1="627" y1="204" x2="627" y2="222"/>
+
+          <text x="538" y="30" font-size="9" fill="var(--accent, #D97757)" font-weight="600">C</text>
+        </g>
+
+        <!-- ===== flow D: Analytics ===== -->
+        <g font-size="11" fill="var(--slate, #141413)">
+          <rect x="734" y="16" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="809" y="32" text-anchor="middle" font-weight="600" font-size="11">AnalyticsPanel</text>
+          <text class="sub" x="809" y="46" text-anchor="middle">Charts</text>
+
+          <rect x="734" y="72" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="809" y="88" text-anchor="middle" font-weight="600" font-size="11">WarehouseService</text>
+          <text class="sub" x="809" y="102" text-anchor="middle">Aggregation</text>
+
+          <rect x="734" y="128" width="150" height="76" rx="8" fill="var(--card-bg, #fff)" stroke="var(--accent, #D97757)" stroke-width="2"/>
+          <text x="809" y="144" text-anchor="middle" font-weight="600" fill="var(--accent, #D97757)" font-size="11">PurchaseOrderDAO</text>
+          <text class="sub" x="809" y="158" text-anchor="middle">SalesOrderDAO</text>
+          <text class="sub" x="809" y="174" text-anchor="middle">InventoryDAO</text>
+
+          <rect x="734" y="222" width="150" height="38" rx="8" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="809" y="238" text-anchor="middle" font-weight="600" font-size="11">purchase_orders</text>
+          <text class="sub" x="809" y="252" text-anchor="middle">sales_orders · inventory</text>
+
+          <line class="edge" x1="702" y1="35" x2="734" y2="35"/>
+          <line class="edge" x1="809" y1="54" x2="809" y2="72"/>
+          <line class="edge" x1="809" y1="110" x2="809" y2="128"/>
+          <line class="edge" x1="809" y1="204" x2="809" y2="222"/>
+
+          <text x="720" y="30" font-size="9" fill="var(--accent, #D97757)" font-weight="600">D</text>
+        </g>
+
+        <!-- ===== cross-cutting bar ===== -->
+        <rect x="16" y="290" width="868" height="42" rx="8" fill="var(--oat, #E3DACC)" stroke="var(--border, #D1CFC5)" stroke-width="1.5" opacity=".35"/>
+        <text x="450" y="308" text-anchor="middle" font-weight="600" font-size="11" fill="var(--slate, #141413)">SessionManager · AppLogger · HibernateUtil · ThemeManager</text>
+        <text class="sub" x="450" y="324" text-anchor="middle">Cross-cutting: every flow reads from or writes to these singletons</text>
+
+        <!-- ===== legend ===== -->
+        <g transform="translate(16, 360)">
+          <rect x="0" y="0" width="130" height="22" rx="6" fill="var(--card-bg, #fff)" stroke="var(--accent, #D97757)" stroke-width="2"/>
+          <text x="65" y="15" text-anchor="middle" font-size="9" fill="var(--accent, #D97757)" font-weight="600">hot path</text>
+          <rect x="146" y="0" width="130" height="22" rx="6" fill="var(--card-bg, #fff)" stroke="var(--border, #D1CFC5)" stroke-width="1.5"/>
+          <text x="211" y="15" text-anchor="middle" font-size="9" fill="var(--muted, #87867F)" font-weight="600">standard path</text>
+          <rect x="292" y="0" width="160" height="22" rx="6" fill="var(--oat, #E3DACC)" stroke="var(--border, #D1CFC5)" stroke-width="1.5" opacity=".5"/>
+          <text x="372" y="15" text-anchor="middle" font-size="9" fill="var(--muted, #87867F)" font-weight="600">cross-cutting concern</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="flow-steps">
+      <div class="flow-step hot">
+        <div class="dot">A</div>
+        <div class="loc">Login.java <span class="cls">→ sessionManager</span></div>
+        <div class="desc">
+          <p>User submits username + password. <code>Login.java</code> calls <code>sessionManager.authenticate()</code> which hashes the input with BCrypt and compares against the stored hash via <code>UserDAO.findByUsername()</code>. On success, the user object is held in a static <code>SessionManager.currentUser</code> reference — no JWT, no cookie, all in-memory for the desktop session lifetime.</p>
+          <p>Sign-up follows the same path but also creates the user row. Password strength is validated client-side via <code>MethodUtil.checkPasswordStrength()</code>.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="dot">B</div>
+        <div class="loc">WarehousePanel <span class="cls">→ WarehouseService</span></div>
+        <div class="desc">
+          <p>All inventory CRUD goes through <code>WarehouseService</code>, the largest service class. <code>addProduct()</code> creates both a <code>ProductEntity</code> and an <code>InventoryEntity</code> in a single transaction. <code>stockIn()</code> / <code>stockOut()</code> update inventory quantities and log to <code>purchase_orders</code> / <code>sales_orders</code> respectively. The panel re-fetches the full table after every mutation via <code>getAllProducts()</code>.</p>
+          <p><code>TableBadgeCellRenderer</code> decorates the quantity column with colored badges at render time — no separate status column in the DB.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="dot">C</div>
+        <div class="loc">orderPanel <span class="cls">→ orderService</span></div>
+        <div class="desc">
+          <p>Multi-item cart lives in <code>orderPanel</code> (a JDialog). On confirm, <code>orderService.checkout()</code> validates every line item's quantity against <code>inventory.quantity</code>, then creates an <code>InvoiceEntity</code> + <code>InvoiceDetailEntity</code> rows, deducts stock via <code>InventoryDAO.updateQuantity()</code>, and records each sale in <code>sales_orders</code>. The whole operation is wrapped in a single Hibernate transaction — if any item fails stock validation, everything rolls back.</p>
+          <p>Invoice PDF export uses iTextPDF 5.5 with a bundled Vietnamese font for Unicode support.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="dot">D</div>
+        <div class="loc">AnalyticsPanel <span class="cls">→ WarehouseService</span></div>
+        <div class="desc">
+          <p><code>AnalyticsPanel</code> queries aggregated data through <code>WarehouseService.getAnalytics()</code>, which calls three DAOs: <code>PurchaseOrderDAO.getTotalByCategory()</code> (cost), <code>SalesOrderDAO.getTotalByCategory()</code> (revenue), and <code>InventoryDAO.getStockValue()</code>. Results feed into the custom <code>swing-chart</code> library for pie charts (income/cost/profit by category) and line charts (financial trends over time). Date-range filtering is applied at the DAO level via Hibernate criteria queries.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ER diagram -->
+  <section>
+    <div class="sec-head"><span class="num">03</span><h2>Entity model</h2></div>
+    <p class="sec-intro">Seven JPA entities with a shared <code>user_id</code> foreign key pattern. All relationships are user-scoped. Tables auto-created by Hibernate <code>hbm2ddl.auto=update</code>.</p>
+    <div class="er-grid">
+      <div class="er-card">
+        <div class="er-head">👤 UserEntity <span class="db">users</span></div>
+        <div class="er-body">
+          <div class="er-field"><span class="pk">●</span> id : UUID (PK)</div>
+          <div class="er-field">username : text</div>
+          <div class="er-field">email : text</div>
+          <div class="er-field">password : text (BCrypt)</div>
+        </div>
+      </div>
+      <div class="er-card">
+        <div class="er-head">📦 ProductEntity <span class="db">products</span></div>
+        <div class="er-body">
+          <div class="er-field"><span class="pk">●</span> id : UUID (PK)</div>
+          <div class="er-field">user_id : UUID (FK)</div>
+          <div class="er-field">UPID : text</div>
+          <div class="er-field">name : text</div>
+        </div>
+      </div>
+      <div class="er-card">
+        <div class="er-head">📋 InventoryEntity <span class="db">inventory</span></div>
+        <div class="er-body">
+          <div class="er-field"><span class="pk">●</span> product_id : UUID (PK/FK)</div>
+          <div class="er-field">user_id : UUID (FK)</div>
+          <div class="er-field">category : text</div>
+          <div class="er-field">price / selling_price : decimal</div>
+          <div class="er-field">quantity : integer</div>
+        </div>
+      </div>
+      <div class="er-card">
+        <div class="er-head">📥 PurchaseOrderEntity <span class="db">purchase_orders</span></div>
+        <div class="er-body">
+          <div class="er-field"><span class="pk">●</span> id : UUID (PK)</div>
+          <div class="er-field">user_id : UUID (FK)</div>
+          <div class="er-field">product_id : UUID (FK)</div>
+          <div class="er-field">quantity / import_price</div>
+          <div class="er-field">date : timestamptz</div>
+        </div>
+      </div>
+      <div class="er-card">
+        <div class="er-head">📤 SalesOrderEntity <span class="db">sales_orders</span></div>
+        <div class="er-body">
+          <div class="er-field"><span class="pk">●</span> id : UUID (PK)</div>
+          <div class="er-field">user_id : UUID (FK)</div>
+          <div class="er-field">product_id : UUID (FK)</div>
+          <div class="er-field">quantity / selling_price</div>
+          <div class="er-field">date : timestamptz</div>
+        </div>
+      </div>
+      <div class="er-card">
+        <div class="er-head">🧾 InvoiceEntity <span class="db">invoices</span></div>
+        <div class="er-body">
+          <div class="er-field"><span class="pk">●</span> invoice_id : UUID (PK)</div>
+          <div class="er-field">user_id : UUID (FK)</div>
+          <div class="er-field">customer_name : text</div>
+          <div class="er-field">total_amount : decimal</div>
+          <div class="er-field">created_at : timestamptz</div>
+        </div>
+      </div>
+      <div class="er-card">
+        <div class="er-head">📄 InvoiceDetailEntity <span class="db">invoice_details</span></div>
+        <div class="er-body">
+          <div class="er-field"><span class="pk">●</span> detail_id : UUID (PK)</div>
+          <div class="er-field">user_id : UUID (FK)</div>
+          <div class="er-field">invoice_id : UUID (FK)</div>
+          <div class="er-field">product_id : UUID (FK)</div>
+          <div class="er-field">quantity / unit_price</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- features -->
+  <section>
+    <div class="sec-head"><span class="num">04</span><h2>Features</h2></div>
+    <p class="sec-intro">Eight modules accessible from the animated sidebar menu. Every panel is lazy-loaded and refreshable.</p>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <span class="icon-b">📊</span>
+        <h3>Dashboard</h3>
+        <p>Overview cards for profit, stock value, and expenses. Recent stock activity feed. Quick-glance financial health.</p>
+      </div>
+      <div class="feat-card">
+        <span class="icon-b">📦</span>
+        <h3>Inventory</h3>
+        <p>Full CRUD for products with search, sort, and stock IN/OUT operations. Table badge renderers for stock status.</p>
+      </div>
+      <div class="feat-card">
+        <span class="icon-b">📈</span>
+        <h3>Analytics</h3>
+        <p>Pie charts (income/cost/profit by category) and line charts (financial trends). Date-range filtering. Custom swing-chart library.</p>
+      </div>
+      <div class="feat-card">
+        <span class="icon-b">🧾</span>
+        <h3>Invoicing</h3>
+        <p>Multi-item cart with stock validation. Auto-creates invoices on checkout. PDF export with Vietnamese font support (iTextPDF).</p>
+      </div>
+      <div class="feat-card">
+        <span class="icon-b">🛒</span>
+        <h3>Cart &amp; Checkout</h3>
+        <p>Shopping cart with stock quantity validation. Auto-generates invoice + sales order + inventory deduction on confirm.</p>
+      </div>
+      <div class="feat-card">
+        <span class="icon-b">🎨</span>
+        <h3>Themes</h3>
+        <p>Four FlatLaf themes: Material You Light/Dark + macOS Light/Dark. Accent color picker. Light/dark toggle in the menu footer.</p>
+      </div>
+      <div class="feat-card">
+        <span class="icon-b">📝</span>
+        <h3>Log Viewer</h3>
+        <p>Real-time application log with ring buffer. Filter by INFO / WARNING / ERROR / DEBUG. Integrated into the menu system.</p>
+      </div>
+      <div class="feat-card">
+        <span class="icon-b">⚙</span>
+        <h3>Configuration</h3>
+        <p>Edit database connection and app settings from within the UI. Account management (profile, password, delete). BCrypt auth.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- tech stack -->
+  <section>
+    <div class="sec-head"><span class="num">05</span><h2>Tech stack</h2></div>
+    <p class="sec-intro">Maven-powered Java 25 desktop app. Zero web framework — all UI is pure Swing with FlatLaf theming.</p>
+    <div class="tech-grid">
+      <div class="tech-card">
+        <span class="t-icon">☕</span>
+        <div class="t-info"><div class="t-name">Java 25</div><div class="t-desc">Source &amp; target, records, pattern matching</div></div>
+      </div>
+      <div class="tech-card">
+        <span class="t-icon">🏗</span>
+        <div class="t-info"><div class="t-name">Maven</div><div class="t-desc">pom.xml, system-scope JARs in library/</div></div>
+      </div>
+      <div class="tech-card">
+        <span class="t-icon">🖼</span>
+        <div class="t-info"><div class="t-name">Swing + FlatLaf 3.7</div><div class="t-desc">Material You &amp; macOS themes</div></div>
+      </div>
+      <div class="tech-card">
+        <span class="t-icon">🗄</span>
+        <div class="t-info"><div class="t-name">Hibernate 6.6</div><div class="t-desc">JPA 3.1 / Jakarta, C3P0 pool</div></div>
+      </div>
+      <div class="tech-card">
+        <span class="t-icon">🐘</span>
+        <div class="t-info"><div class="t-name">PostgreSQL</div><div class="t-desc">Supabase-hosted, auto DDL</div></div>
+      </div>
+      <div class="tech-card">
+        <span class="t-icon">🔒</span>
+        <div class="t-info"><div class="t-name">BCrypt</div><div class="t-desc">at.favre.lib 0.10.2, password hashing</div></div>
+      </div>
+      <div class="tech-card">
+        <span class="t-icon">📊</span>
+        <div class="t-info"><div class="t-name">swing-chart</div><div class="t-desc">Custom local JAR for pie &amp; line charts</div></div>
+      </div>
+      <div class="tech-card">
+        <span class="t-icon">📄</span>
+        <div class="t-info"><div class="t-name">iTextPDF 5.5</div><div class="t-desc">Invoice PDF export, VN font support</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- menu -->
+  <section>
+    <div class="sec-head"><span class="num">06</span><h2>Navigation</h2></div>
+    <p class="sec-intro">Animated sidebar menu with RTL support, collapsible, scrollable. Routes map directly to panel classes via <code>MainForm</code>.</p>
+    <div class="menu-table">
+      <div class="menu-row head">
+        <div class="cell">#</div>
+        <div class="cell">Label</div>
+        <div class="cell">Panel class</div>
+      </div>
+      <div class="menu-row">
+        <div class="cell idx">0</div>
+        <div class="cell label">Dashboard</div>
+        <div class="cell pkg-name">DashPanel.java</div>
+      </div>
+      <div class="menu-row">
+        <div class="cell idx">1</div>
+        <div class="cell label">Inventory</div>
+        <div class="cell pkg-name">WarehousePanel.java</div>
+      </div>
+      <div class="menu-row">
+        <div class="cell idx">2</div>
+        <div class="cell label">Analytics</div>
+        <div class="cell pkg-name">AnalyticsPanel.java</div>
+      </div>
+      <div class="menu-row">
+        <div class="cell idx">3</div>
+        <div class="cell label">Invoice</div>
+        <div class="cell pkg-name">invoicesPanel.java</div>
+      </div>
+      <div class="menu-row">
+        <div class="cell idx">4</div>
+        <div class="cell label">Settings</div>
+        <div class="cell pkg-name">settings.java</div>
+      </div>
+      <div class="menu-row">
+        <div class="cell idx">5</div>
+        <div class="cell label">Log Viewer</div>
+        <div class="cell pkg-name">LogViewerPanel.java</div>
+      </div>
+      <div class="menu-row">
+        <div class="cell idx">6</div>
+        <div class="cell label">Configuration</div>
+        <div class="cell pkg-name">ConfigPanel.java</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- theme palette -->
+  <section>
+    <div class="sec-head"><span class="num">07</span><h2>Theme palette</h2></div>
+    <p class="sec-intro">Four themes, two families. Material You (purple accent) is the default. macOS themes use system-blue accent. All driven by FlatLaf <code>.properties</code> files.</p>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <span class="icon-b">🌞</span>
+        <h3>Material You Light</h3>
+        <p>Bg <code>#FFFBFA</code> · Fg <code>#1C1B1F</code> · Accent <code>#6750A4</code> (purple)</p>
+        <div class="swatches">
+          <span class="swatch light">bg</span>
+          <span class="swatch" style="background:#6750A4">accent</span>
+          <span class="swatch oat">oat</span>
+        </div>
+      </div>
+      <div class="feat-card">
+        <span class="icon-b">🌙</span>
+        <h3>Material You Dark</h3>
+        <p>Bg <code>#1C1B1F</code> · Fg <code>#E6E1E5</code> · Accent <code>#D0BCFF</code> (light purple)</p>
+        <div class="swatches">
+          <span class="swatch" style="background:#1C1B1F; color:#E6E1E5">bg</span>
+          <span class="swatch" style="background:#D0BCFF">accent</span>
+          <span class="swatch" style="background:#4A4458; color:#E6E1E5">surface</span>
+        </div>
+      </div>
+      <div class="feat-card">
+        <span class="icon-b">💻</span>
+        <h3>macOS Light</h3>
+        <p>Aqua-inspired light theme. System-blue accent. FlatMacLightLaf.</p>
+      </div>
+      <div class="feat-card">
+        <span class="icon-b">🌃</span>
+        <h3>macOS Dark</h3>
+        <p>Aqua-inspired dark theme. Vibrant blue accent. FlatMacDarkLaf.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Warehouse Manager · MinhCreatorVN</span>
+    <span>MIT License · <a href="https://github.com/MinhCreatorVN/manager_app" target="_blank">GitHub</a></span>
+  </footer>
+
+</div>
+
+<button id="themeToggle" aria-label="Toggle theme">🌙</button>
+
+<script>
+(function() {
+  var html = document.documentElement;
+  var btn = document.getElementById('themeToggle');
+
+  function updateButton() {
+    btn.textContent = html.classList.contains('dark') ? '☀️' : '🌙';
+  }
+  updateButton();
+
+  btn.addEventListener('click', function() {
+    html.classList.toggle('dark');
+    localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+    updateButton();
+
+    // Recolor SVG markers — force a repaint by toggling a class
+    document.querySelectorAll('svg').forEach(function(svg) {
+      var use = svg.querySelector('use');
+      if (use) {
+        var clone = use.cloneNode(true);
+        use.parentNode.replaceChild(clone, use);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

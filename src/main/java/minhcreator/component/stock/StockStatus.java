@@ -19,7 +19,25 @@ public enum StockStatus implements TableBadgeCellRenderer.Info {
     StockStatus(String text, java.awt.Color color, String svg) {
         this.text = text;
         this.color = color;
-        this.icon = new FlatSVGIcon("minhcreator/assets/functional_icon/stock/" + svg, 1f).setColorFilter(new FlatSVGIcon.ColorFilter((component, color1) -> color));
+        this.icon = null;
+    }
+
+    public synchronized FlatSVGIcon getOrCreateIcon() {
+        if (icon == null) {
+            String svg = switch (this) {
+                case AVAIlABLE -> "stock.svg";
+                case OUT -> "cross.svg";
+                case LOW -> "warning.svg";
+            };
+            icon = new FlatSVGIcon("minhcreator/assets/functional_icon/stock/" + svg, 1f)
+                    .setColorFilter(new FlatSVGIcon.ColorFilter((component, color1) -> color));
+        }
+        return icon;
+    }
+
+    @Override
+    public Icon getIcon() {
+        return getOrCreateIcon();
     }
 
     StockStatus(String text, java.awt.Color color) {
@@ -29,7 +47,7 @@ public enum StockStatus implements TableBadgeCellRenderer.Info {
 
     private final String text;
     private final java.awt.Color color;
-    private FlatSVGIcon icon;
+    private volatile FlatSVGIcon icon;
 
     @Override
     public String getText() {
@@ -39,11 +57,6 @@ public enum StockStatus implements TableBadgeCellRenderer.Info {
     @Override
     public Color getColor() {
         return color;
-    }
-
-    @Override
-    public Icon getIcon() {
-        return icon;
     }
 
     public static StockStatus getStatusBage(int Storage, int lower) {

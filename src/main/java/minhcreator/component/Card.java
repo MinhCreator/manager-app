@@ -81,23 +81,31 @@ public class Card extends JPanel {
         return accentColor;
     }
 
+    private transient GradientPaint cachedGradient;
+    private transient Color cachedLighter;
+    private transient Dimension lastSize;
+
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         Color bg = UIManager.getColor("Panel.background");
-        Color lighter = new Color(
-                Math.min(255, bg.getRed() + 20),
-                Math.min(255, bg.getGreen() + 20),
-                Math.min(255, bg.getBlue() + 20)
-        );
-        GradientPaint grad = new GradientPaint(0, 0, lighter, getWidth(), getHeight(), bg);
-        g2.setPaint(grad);
-        g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
+        Dimension size = getSize();
+        if (!size.equals(lastSize)) {
+            lastSize = size;
+            cachedLighter = new Color(
+                    Math.min(255, bg.getRed() + 20),
+                    Math.min(255, bg.getGreen() + 20),
+                    Math.min(255, bg.getBlue() + 20)
+            );
+            cachedGradient = new GradientPaint(0, 0, cachedLighter, size.width, size.height, bg);
+        }
+        g2.setPaint(cachedGradient);
+        g2.fillRoundRect(0, 0, size.width, size.height, 16, 16);
 
         g2.setColor(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 40));
-        g2.fillRoundRect(0, 0, 6, getHeight(), 3, 3);
+        g2.fillRoundRect(0, 0, 6, size.height, 3, 3);
 
         g2.dispose();
         super.paintComponent(g);

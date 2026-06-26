@@ -251,8 +251,8 @@ public class settings extends JPanel {
     }
 
     private void saveConfigProps() {
-        String path = getClass().getResource("/minhcreator/config/appConfig.properties").getPath();
-        try (OutputStream os = new FileOutputStream(path)) {
+        try (OutputStream os = new FileOutputStream(
+                "config/appConfig.properties", false)) {
             appProps.store(os, "Warehouse Management System Configuration");
         } catch (Exception e) {
             AppLogger.error("Settings", "Failed to save config: " + e.getMessage());

@@ -12,8 +12,12 @@ public class MenuAnimation {
     private static final HashMap<MenuItem, Animator> hash = new HashMap<>();
 
     public static void animate(MenuItem menu, boolean show) {
-        if (hash.containsKey(menu) && hash.get(menu).isRunning()) {
-            hash.get(menu).stop();
+        Animator existing = hash.get(menu);
+        if (existing != null) {
+            if (existing.isRunning()) {
+                existing.stop();
+            }
+            hash.remove(menu);
         }
         menu.setMenuShow(show);
         Animator animator = new Animator(400, new Animator.TimingTarget() {

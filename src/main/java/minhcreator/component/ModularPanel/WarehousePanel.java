@@ -187,11 +187,7 @@ public class WarehousePanel extends JPanel implements Refreshable {
                 orderPanel = new orderPanel();
             }
             orderService.addToCartButton(productId, upid, name, sellingPrice, quantity);
-            Notifications.getInstance().show(
-                    Notifications.Type.SUCCESS,
-                    Notifications.Location.TOP_CENTER,
-                    "Added " + name + " to Cart !"
-            );
+            
 
         });
         CartMenu = new JButton("Cart Menu");
@@ -234,17 +230,18 @@ public class WarehousePanel extends JPanel implements Refreshable {
         table.setModel(model);
     }
 
+    private static final InventoryDAO INVENTORY_DAO = new InventoryDAO();
+
     public List<Product> buildsearchProducts(String user_product, String user_inv,
                                              String searchText) {
         List<Product> list = new ArrayList<>();
-        InventoryDAO inventoryDAO = new InventoryDAO();
         int userId = login.getInstance().session.getUserId();
 
         List<Object[]> rows;
         if (searchText != null && !searchText.trim().isEmpty()) {
-            rows = inventoryDAO.searchProductsWithInventory(userId, searchText.trim());
+            rows = INVENTORY_DAO.searchProductsWithInventory(userId, searchText.trim());
         } else {
-            rows = inventoryDAO.getProductsWithInventory(userId);
+            rows = INVENTORY_DAO.getProductsWithInventory(userId);
         }
 
         for (Object[] row : rows) {
@@ -306,7 +303,6 @@ public class WarehousePanel extends JPanel implements Refreshable {
         dialog.setSize(450, 500);
         dialog.setLocationRelativeTo(Application.getInstance());
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        dialog.setVisible(true);
         dialog.setTitle("Import Product");
         StockPanel = new JPanel(new MigLayout("wrap, fillx, insets 35 45 30 45", "[fill,360]"));
 
@@ -395,6 +391,7 @@ public class WarehousePanel extends JPanel implements Refreshable {
         StockPanel.add(addButton_add_stock_dialog, "split 2");
         StockPanel.add(CancelBut_add_stock_dialog);
         dialog.add(StockPanel);
+        dialog.setVisible(true);
     }
 
     public void editProduct(String user_product, String user_inventory, String user_purchase, String user_sale) {
@@ -403,7 +400,6 @@ public class WarehousePanel extends JPanel implements Refreshable {
         dialog.setSize(450, 500);
         dialog.setLocationRelativeTo(Application.getInstance());
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        dialog.setVisible(true);
         StockPanel = new JPanel(new MigLayout("wrap, fillx, insets 35 45 30 45", "[fill,360]"));
 
         int selectedRow = table.getSelectedRow();
@@ -541,6 +537,7 @@ public class WarehousePanel extends JPanel implements Refreshable {
         StockPanel.add(addButton_add_stock_dialog, "split 2");
         StockPanel.add(CancelBut_add_stock_dialog);
         dialog.add(StockPanel);
+        dialog.setVisible(true);
     }
 
     public void deleteSelectedProducts(String user_inv, String user_product, String user_purchase, String user_sale, JTable table) {
@@ -596,10 +593,11 @@ public class WarehousePanel extends JPanel implements Refreshable {
     }
 
     public void loadTableData(String user_product, String user_inventory) {
-        try {
-            List<Product> products = WarehouseService.getAllProducts(user_product, user_inventory);
-            DefaultTableModel model = buildTableModel(products);
-            SwingUtilities.invokeLater(() -> {
+        new Thread(() -> {
+            try {
+                List<Product> products = WarehouseService.getAllProducts(user_product, user_inventory);
+                DefaultTableModel model = buildTableModel(products);
+                SwingUtilities.invokeLater(() -> {
                 table.setModel(model);
                 // Re-apply the cell renderer after setting the model
                 TableBadgeCellRenderer.apply(table, StockStatus.class);
@@ -607,11 +605,12 @@ public class WarehousePanel extends JPanel implements Refreshable {
                 DefaultTableCellRenderer render = new DefaultTableCellRenderer();
                 render.setHorizontalAlignment(SwingConstants.CENTER);
                 table.setDefaultRenderer(Object.class, render);
-            });
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error loading data: " + ex.getMessage());
-        }
+                });
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error loading data: " + ex.getMessage());
+            }
+        }).start();
     }
 
     public DefaultTableModel buildTableModel(List<Product> products) {
@@ -662,7 +661,7 @@ public class WarehousePanel extends JPanel implements Refreshable {
     public List<Product> sortProducts(String user_product, String user_inv, String sortField, String sortOrder) {
         int userId = login.getInstance().session.getUserId();
         List<Product> list = new ArrayList<>();
-        List<Object[]> rows = new InventoryDAO().getProductsWithInventory(userId);
+        List<Object[]> rows = INVENTORY_DAO.getProductsWithInventorySorted(userId, sortField, sortOrder);
         for (Object[] row : rows) {
             list.add(new Product(
                     row[0] != null ? (int) row[0] : 0,

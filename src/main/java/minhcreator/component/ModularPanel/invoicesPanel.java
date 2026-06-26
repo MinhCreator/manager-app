@@ -18,6 +18,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.io.FileOutputStream;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static minhcreator.component.page.Login.login;
@@ -105,7 +106,7 @@ public class invoicesPanel extends javax.swing.JPanel implements Refreshable {
         JPanel tablePanel = new JPanel(new BorderLayout(5, 5));
         JPanel invoice_Panel = new JPanel(new BorderLayout());
 
-        String[] col_invoice = {"ID invoices", "Created at", "Total"};
+        String[] col_invoice = {"ID invoices", "Customer", "Created at", "Total"};
         model = new DefaultTableModel(col_invoice, 0);
         table_invoices = new JTable(model);
         table_invoices.setRowHeight(28);
@@ -162,13 +163,17 @@ public class invoicesPanel extends javax.swing.JPanel implements Refreshable {
         return panel3;
     }
 
+    private static final DateTimeFormatter INVOICE_DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final TimeManager TIME_MANAGER = new TimeManager();
+
     private void getDataInvoice() {
         model.setRowCount(0);
         List<InvoiceEntity> invoices = invoiceDAO.findByUserId(userId);
         for (InvoiceEntity inv : invoices) {
             model.addRow(new Object[]{
                     inv.getInvoiceId(),
-                    new TimeManager().TimeDateFormated(inv.getCreatedAt().toString(), "yyyy-MM-dd"),
+                    inv.getCustomerName() != null ? inv.getCustomerName() : "-",
+                    TIME_MANAGER.TimeDateFormated(inv.getCreatedAt().toString(), "yyyy-MM-dd"),
                     inv.getTotalAmount()
             });
         }
@@ -178,21 +183,35 @@ public class invoicesPanel extends javax.swing.JPanel implements Refreshable {
         invoice_detail_model.setRowCount(0);
         if (invoiceId == null || invoiceId.isEmpty()) return;
 
-        List<Object[]> details = invoiceDAO.getInvoiceDetails(Integer.parseInt(invoiceId), userId);
-        for (Object[] row : details) {
-            invoice_detail_model.addRow(new Object[]{
-                    invoiceId,
-                    (String) row[0],
-                    (int) row[1],
-                    String.format("$%.2f", (double) row[2]),
-                    String.format("$%.2f", (double) row[3])
-            });
-        }
+        SwingWorker<Void, Object[]> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                List<Object[]> details = invoiceDAO.getInvoiceDetails(Integer.parseInt(invoiceId), userId);
+                for (Object[] row : details) {
+                    publish(row);
+                }
+                return null;
+            }
+
+            @Override
+            protected void process(List<Object[]> chunks) {
+                for (Object[] row : chunks) {
+                    invoice_detail_model.addRow(new Object[]{
+                            invoiceId,
+                            (String) row[0],
+                            (int) row[1],
+                            String.format("$%.2f", (double) row[2]),
+                            String.format("$%.2f", (double) row[3])
+                    });
+                }
+            }
+        };
+        worker.execute();
     }
 
     private void updateTotalMoney(int index) {
         double total = 0;
-        String amountStr = model.getValueAt(index, 2).toString().replace("$", "").replace(",", "");
+        String amountStr = model.getValueAt(index, 3).toString().replace("$", "").replace(",", "");
         total += Double.parseDouble(amountStr);
         Total_Money_Sum.setText(String.format("Invoice total: $%.2f", total));
     }
@@ -203,7 +222,8 @@ public class invoicesPanel extends javax.swing.JPanel implements Refreshable {
         for (InvoiceEntity inv : invoices) {
             model.addRow(new Object[]{
                     inv.getInvoiceId(),
-                    new TimeManager().TimeDateFormated(inv.getCreatedAt().toString(), "yyyy-MM-dd"),
+                    inv.getCustomerName() != null ? inv.getCustomerName() : "-",
+                    TIME_MANAGER.TimeDateFormated(inv.getCreatedAt().toString(), "yyyy-MM-dd"),
                     String.format("$%.2f", inv.getTotalAmount())
             });
         }
@@ -231,9 +251,12 @@ public class invoicesPanel extends javax.swing.JPanel implements Refreshable {
             Document document = new Document();
             PdfWriter.getInstance(document, new FileOutputStream("Invoice_" + InvoiceID + ".pdf"));
             document.open();
-            document.add(new com.itextpdf.text.Phrase("Invoice", fontVN));
+            document.add(new com.itextpdf.text.Phrase("INVOICE", fontVN));
             document.add(new Paragraph(" "));
             document.add(new com.itextpdf.text.Phrase("Invoice ID: " + InvoiceID, fontVN));
+            String customerName = table_invoices.getValueAt(row, 1).toString();
+            document.add(new Paragraph(" "));
+            document.add(new com.itextpdf.text.Phrase("Customer: " + customerName, fontVN));
             document.add(new Paragraph(" "));
 
             PdfPTable pdfTable = new PdfPTable(4);

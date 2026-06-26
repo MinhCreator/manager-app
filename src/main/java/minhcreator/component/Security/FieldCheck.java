@@ -12,18 +12,13 @@ import java.util.regex.Pattern;
  */
 public class FieldCheck {
 
-    // regex email checking
-    private String regex = "^\\w+[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^\\w+[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+$");
 
-    // regex username checking
-    private String regexU = "^[A-Za-z0-9+_.-]+$";
-
-    // create app instanced
     private Application app = Application.getInstance();
 
     public boolean emailCheck(String email) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher match = pattern.matcher(email);
+        Matcher match = EMAIL_PATTERN.matcher(email);
 
         if (match.matches()) {
 //            JOptionPane.showMessageDialog(app, "email is valid", "Success", JOptionPane.INFORMATION_MESSAGE);
@@ -35,8 +30,7 @@ public class FieldCheck {
     }
 
     public boolean usernameCheck(String username) {
-        Pattern pattern = Pattern.compile(regexU);
-        Matcher match = pattern.matcher(username);
+        Matcher match = USERNAME_PATTERN.matcher(username);
         Boolean space = username.contains(" ");
 
         if (match.matches() && !space) {
@@ -49,10 +43,8 @@ public class FieldCheck {
     }
 
     public boolean fusionCheck(String obj, String successMess, String errorMess) {
-        Pattern Emailpattern = Pattern.compile(regex);
-        Pattern Userpattern = Pattern.compile(regexU);
-        Matcher Emailmatch = Emailpattern.matcher(obj);
-        Matcher Usermatch = Userpattern.matcher(obj);
+        Matcher Emailmatch = EMAIL_PATTERN.matcher(obj);
+        Matcher Usermatch = USERNAME_PATTERN.matcher(obj);
         Boolean space = obj.contains(" ");
 
         if (Emailmatch.matches() || Usermatch.matches() && !space) {
@@ -65,10 +57,8 @@ public class FieldCheck {
     }
 
     public boolean fusionCheckNoDialog(String obj) {
-        Pattern Emailpattern = Pattern.compile(regex);
-        Pattern Userpattern = Pattern.compile(regexU);
-        Matcher Emailmatch = Emailpattern.matcher(obj);
-        Matcher Usermatch = Userpattern.matcher(obj);
+        Matcher Emailmatch = EMAIL_PATTERN.matcher(obj);
+        Matcher Usermatch = USERNAME_PATTERN.matcher(obj);
         Boolean space = obj.contains(" ");
 
         return (Emailmatch.matches() || Usermatch.matches() && !space) ? true : false;

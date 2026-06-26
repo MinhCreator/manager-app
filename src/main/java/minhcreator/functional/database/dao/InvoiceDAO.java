@@ -84,7 +84,8 @@ public class InvoiceDAO {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             String pat = "%" + searchText + "%";
             Query<InvoiceEntity> q = session.createQuery(
-                    "FROM InvoiceEntity WHERE userId = :uid AND CAST(invoiceId AS string) LIKE :pat " +
+                    "FROM InvoiceEntity WHERE userId = :uid AND " +
+                    "(CAST(invoiceId AS string) LIKE :pat OR customerName LIKE :pat) " +
                     "ORDER BY createdAt DESC", InvoiceEntity.class);
             q.setParameter("uid", userId);
             q.setParameter("pat", pat);

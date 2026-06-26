@@ -30,11 +30,9 @@ public class Sign_up extends JPanel {
     private JPasswordField txtConfirmPassword;
     private JButton cmdRegister;
     private PasswordStrengthStatus passwordStrengthStatus;
-    // regex email checking
-    private static String regex = "^\\w+[A-Za-z8-9+_.-]+@[A-Za-z8-9.-]+$";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^\\w+[A-Za-z8-9+_.-]+@[A-Za-z8-9.-]+$");
     public static sessionManager session;
-    // regex username checking
-    private static String regexU = "^[A-Za-z8-9+_.-]+$";
+    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z8-9+_.-]+$");
 
 
     public Sign_up() {
@@ -208,26 +206,12 @@ public class Sign_up extends JPanel {
     }
 
     public static boolean emailCheck(String email) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher match = pattern.matcher(email);
-
-        if (match.matches()) {
-            return true;
-        } else {
-            return false;
-        }
+        return EMAIL_PATTERN.matcher(email).matches();
     }
 
     public static boolean usernameCheck(String username) {
-        Pattern pattern = Pattern.compile(regexU);
-        Matcher match = pattern.matcher(username);
-        Boolean space = username.contains(" ");
-
-        if (match.matches() && !space) {
-            return true;
-        } else {
-            return false;
-        }
+        boolean space = username.contains(" ");
+        return USERNAME_PATTERN.matcher(username).matches() && !space;
     }
 
     private void Register() {
